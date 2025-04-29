@@ -42,3 +42,6 @@ __dev
 .vercel
 
 bun.lockb
+
+# smart-contract
+apps/smart-contract/target

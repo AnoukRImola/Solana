@@ -1,11 +1,8 @@
 {
-  "name": "tl-work-sol",
-  "private": true,
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
-  "scripts": {
+	"name": "tl-work-sol",
+	"private": true,
+	"workspaces": ["apps/*", "packages/*"],
+	"scripts": {
 		"init": "bun install && bun prepare",
 		"format-and-lint": "biome check .",
 		"format-and-lint:fix": "biome check . --write",
@@ -37,5 +34,7 @@
 		}
 	},
 	"packageManager": "bun@1.2.0",
-	"dependencies": {}
+	"dependencies": {
+		"axios": "^1.9.0"
+	}
 }
