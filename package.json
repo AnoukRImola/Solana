@@ -5,11 +5,37 @@
     "apps/*",
     "packages/*"
   ],
-  "devDependencies": {
-    "@types/bun": "latest",
-    "typescript": "^5"
-  },
-  "peerDependencies": {
-    "typescript": "^5"
-  }
+  "scripts": {
+		"init": "bun install && bun prepare",
+		"format-and-lint": "biome check .",
+		"format-and-lint:fix": "biome check . --write",
+		"clean": "git clean -xdf node_modules",
+		"clean:node_modules": "find . -name 'node_modules' -type d -prune -exec rm -rf '{}' +",
+		"prepare": "husky"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "1.9.4",
+		"@commitlint/cli": "^19.6.1",
+		"@commitlint/config-conventional": "^19.6.0",
+		"@types/bun": "latest",
+		"@types/node": "^20.17.24",
+		"eslint": "^8.57.1",
+		"eslint-plugin-biome": "^0.9.19",
+		"genql": "latest",
+		"husky": "^9.1.7",
+		"prettier": "^3.3.3"
+	},
+	"peerDependencies": {
+		"typescript": "^5.8.2"
+	},
+	"engines": {
+		"bun": "1.x"
+	},
+	"husky": {
+		"hooks": {
+			"commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
+		}
+	},
+	"packageManager": "bun@1.2.0",
+	"dependencies": {}
 }
