@@ -3,7 +3,7 @@
 	"version": "0.0.1",
 	"description": "Allbridge functions package",
 	"main": "src/index.ts",
-	"types": "src/index.types.ts",
+	"types": "src/types/index.ts",
 	"license": "MIT",
 	"scripts": {
 		"build": "tsc"
