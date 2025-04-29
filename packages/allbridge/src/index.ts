@@ -24,8 +24,12 @@ const SDK_NODE_URLS: NodeRpcUrls = {
 	[ChainSymbol.SRB]: 'https://rpc.ankr.com/stellar_soroban',
 	[ChainSymbol.STLR]: 'https://horizon.stellar.org',
 }
-const ESCROW_USDC_ADDRESS =
-	'GDW2WOVG6JQLYD46HQWAGUDYFPWKCUNOCCMMZEUUEVNSGI4ODA3H3NXH'
+const ESCROW_USDC_ADDRESSES = {
+	[ChainSymbol.SOL]: 'GDW2...', // Replace with actual USDC address
+	[ChainSymbol.TRX]: 'GDW2...', // Replace with actual USDC address
+	[ChainSymbol.SRB]: 'GDW2...', // Replace with actual USDC address
+	[ChainSymbol.STLR]: 'GDW2...', // Replace with actual USDC address
+}
 
 export class AllbridgeService {
 	private readonly sdk: AllbridgeCoreSdk
@@ -110,7 +114,11 @@ export class AllbridgeService {
 		fromToken: string
 		amount: string
 		userAddress: string
-		walletType: 'evm' | 'solana' | 'stellar'
+		walletType:
+			| ChainSymbol.SOL
+			| ChainSymbol.TRX
+			| ChainSymbol.SRB
+			| ChainSymbol.STLR
 	}): Promise<{
 		txHash: string
 	}> {
@@ -136,7 +144,7 @@ export class AllbridgeService {
 		const sendParams: SendParams = {
 			amount,
 			fromAccountAddress: userAddress,
-			toAccountAddress: ESCROW_USDC_ADDRESS, // Escrow system will receive USDC
+			toAccountAddress: ESCROW_USDC_ADDRESSES[walletType], // Escrow system will receive USDC
 			sourceToken,
 			destinationToken: usdcToken,
 			messenger: Messenger.ALLBRIDGE,
