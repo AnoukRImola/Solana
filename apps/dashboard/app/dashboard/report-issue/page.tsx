@@ -1,9 +1,9 @@
-"use client";
+'use client'
 
-import ReportIssueLogged from "~/components/modules/report-issue/ui/pages/ReportIssueLogged";
+import ReportIssueLogged from '~/components/modules/report-issue/ui/pages/ReportIssueLogged'
 
 const ReportIssuePage: React.FC = () => {
-  return <ReportIssueLogged />;
-};
+	return <ReportIssueLogged />
+}
 
-export default ReportIssuePage;
+export default ReportIssuePage

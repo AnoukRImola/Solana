@@ -46,4 +46,4 @@ export const initializeEscrow = async (
     }
   }
 };
-`;
+`

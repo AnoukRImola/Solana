@@ -1,4 +1,4 @@
 export interface LoadersSettingStore {
-  isRequestingAPIKey: boolean;
-  setIsRequestingAPIKey: (value: boolean) => void;
+	isRequestingAPIKey: boolean
+	setIsRequestingAPIKey: (value: boolean) => void
 }

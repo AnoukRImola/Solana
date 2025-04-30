@@ -1,28 +1,28 @@
-"use client";
+'use client'
 
-import { useGlobalAuthenticationStore } from "~/core/store/data";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
+import { useGlobalAuthenticationStore } from '~/core/store/data'
 
 const useHeaderWithoutAuth = () => {
-  const { address } = useGlobalAuthenticationStore();
-  const router = useRouter();
+	const { address } = useGlobalAuthenticationStore()
+	const router = useRouter()
 
-  useEffect(() => {
-    if (address) {
-      router.push("/dashboard");
-    }
-  }, [address, router]);
+	useEffect(() => {
+		if (address) {
+			router.push('/dashboard')
+		}
+	}, [address, router])
 
-  const handleRequestApiKey = () => {
-    router.push("/request-api-key");
-  };
+	const handleRequestApiKey = () => {
+		router.push('/request-api-key')
+	}
 
-  const handleReportIssue = () => {
-    router.push("/report-issue");
-  };
+	const handleReportIssue = () => {
+		router.push('/report-issue')
+	}
 
-  return { handleRequestApiKey, handleReportIssue, address };
-};
+	return { handleRequestApiKey, handleReportIssue, address }
+}
 
-export default useHeaderWithoutAuth;
+export default useHeaderWithoutAuth

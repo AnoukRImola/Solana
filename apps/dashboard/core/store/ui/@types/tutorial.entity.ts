@@ -1,4 +1,4 @@
 export interface TutorialGlobalUIStore {
-  run: boolean;
-  setRun: (run: boolean) => void;
+	run: boolean
+	setRun: (run: boolean) => void
 }

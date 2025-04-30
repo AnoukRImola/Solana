@@ -1,24 +1,24 @@
-"use client";
+'use client'
 
-import { useGlobalBoundedStore } from "~/core/store/data";
+import { useGlobalBoundedStore } from '~/core/store/data'
 
 interface useSuccessDialogProps {
-  setIsSuccessDialogOpen: (value: boolean) => void;
+	setIsSuccessDialogOpen: (value: boolean) => void
 }
 
 const useSuccessDialog = ({
-  setIsSuccessDialogOpen,
+	setIsSuccessDialogOpen,
 }: useSuccessDialogProps) => {
-  const setRecentEscrow = useGlobalBoundedStore(
-    (state) => state.setRecentEscrow,
-  );
+	const setRecentEscrow = useGlobalBoundedStore(
+		(state) => state.setRecentEscrow,
+	)
 
-  const handleClose = () => {
-    setIsSuccessDialogOpen(false);
-    setRecentEscrow(undefined);
-  };
+	const handleClose = () => {
+		setIsSuccessDialogOpen(false)
+		setRecentEscrow(undefined)
+	}
 
-  return { handleClose };
-};
+	return { handleClose }
+}
 
-export default useSuccessDialog;
+export default useSuccessDialog

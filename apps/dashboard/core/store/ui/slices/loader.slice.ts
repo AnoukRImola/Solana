@@ -1,17 +1,17 @@
-import { StateCreator } from "zustand";
-import { LoaderGlobalUIStore } from "../@types/loader.entity";
+import type { StateCreator } from 'zustand'
+import type { LoaderGlobalUIStore } from '../@types/loader.entity'
 
 export const useLoaderSlice: StateCreator<
-  LoaderGlobalUIStore,
-  [["zustand/devtools", never]],
-  [],
-  LoaderGlobalUIStore
+	LoaderGlobalUIStore,
+	[['zustand/devtools', never]],
+	[],
+	LoaderGlobalUIStore
 > = (set) => {
-  return {
-    // Stores
-    isLoading: false,
+	return {
+		// Stores
+		isLoading: false,
 
-    // Modifiers
-    setIsLoading: (isLoading: boolean) => set({ isLoading }),
-  };
-};
+		// Modifiers
+		setIsLoading: (isLoading: boolean) => set({ isLoading }),
+	}
+}

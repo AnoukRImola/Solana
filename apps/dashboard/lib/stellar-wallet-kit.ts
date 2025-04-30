@@ -1,19 +1,19 @@
-import { kit } from "~/components/modules/auth/wallet/constants/wallet-kit.constant";
-import { WalletNetwork } from "@creit.tech/stellar-wallets-kit";
+import { WalletNetwork } from '@creit.tech/stellar-wallets-kit'
+import { kit } from '~/components/modules/auth/wallet/constants/wallet-kit.constant'
 
 interface signTransactionProps {
-  unsignedTransaction: string;
-  address: string;
+	unsignedTransaction: string
+	address: string
 }
 
 export const signTransaction = async ({
-  unsignedTransaction,
-  address,
+	unsignedTransaction,
+	address,
 }: signTransactionProps): Promise<string> => {
-  const { signedTxXdr } = await kit.signTransaction(unsignedTransaction, {
-    address,
-    networkPassphrase: WalletNetwork.TESTNET,
-  });
+	const { signedTxXdr } = await kit.signTransaction(unsignedTransaction, {
+		address,
+		networkPassphrase: WalletNetwork.TESTNET,
+	})
 
-  return signedTxXdr;
-};
+	return signedTxXdr
+}

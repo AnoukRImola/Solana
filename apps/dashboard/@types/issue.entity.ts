@@ -1,4 +1,4 @@
 export enum IssueType {
-  Bug = "Bug",
-  Recommendation = "Recommendation",
+	Bug = 'Bug',
+	Recommendation = 'Recommendation',
 }

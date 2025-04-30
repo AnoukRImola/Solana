@@ -1,9 +1,9 @@
-"use client";
+'use client'
 
-import MyEscrows from "~/components/modules/escrow/ui/pages/MyEscrows";
+import MyEscrows from '~/components/modules/escrow/ui/pages/MyEscrows'
 
 const EscrowsPage: React.FC = () => {
-  return <MyEscrows />;
-};
+	return <MyEscrows />
+}
 
-export default EscrowsPage;
+export default EscrowsPage

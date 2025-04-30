@@ -1,7 +1,7 @@
-import type { Trustline } from "~/@types/trustline.entity";
+import type { Trustline } from '~/@types/trustline.entity'
 
 export interface TrustlineGlobalStore {
-  trustlines: Trustline[];
+	trustlines: Trustline[]
 
-  getAllTrustlines: () => void;
+	getAllTrustlines: () => void
 }

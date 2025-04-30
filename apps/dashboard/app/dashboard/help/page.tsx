@@ -1,9 +1,9 @@
-"use client";
+'use client'
 
-import Help from "~/components/modules/help/ui/pages/Help";
+import Help from '~/components/modules/help/ui/pages/Help'
 
 const HelpPage: React.FC = () => {
-  return <Help />;
-};
+	return <Help />
+}
 
-export default HelpPage;
+export default HelpPage

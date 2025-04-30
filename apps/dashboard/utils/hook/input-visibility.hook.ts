@@ -1,16 +1,16 @@
-import { Dispatch, SetStateAction } from "react";
+import type { Dispatch, SetStateAction } from 'react'
 
 interface useChangeUtilsProps {
-  type: string;
-  setType: Dispatch<SetStateAction<string>>;
+	type: string
+	setType: Dispatch<SetStateAction<string>>
 }
 
 export const useChangeUtils = () => {
-  const changeTypeInput = ({ type, setType }: useChangeUtilsProps) => {
-    setType(type === "text" ? "password" : "text");
-  };
+	const changeTypeInput = ({ type, setType }: useChangeUtilsProps) => {
+		setType(type === 'text' ? 'password' : 'text')
+	}
 
-  return {
-    changeTypeInput,
-  };
-};
+	return {
+		changeTypeInput,
+	}
+}

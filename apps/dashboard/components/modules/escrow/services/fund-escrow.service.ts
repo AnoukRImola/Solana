@@ -1,34 +1,32 @@
-import type { FundEscrowPayload } from "~/@types/escrow.entity";
-import http from "~/core/config/axios/http";
-import { kit } from "~/components/modules/auth/wallet/constants/wallet-kit.constant";
-import axios from "axios";
-import { signTransaction } from "~/lib/stellar-wallet-kit";
+import axios from 'axios'
+import type { FundEscrowPayload } from '~/@types/escrow.entity'
+import { kit } from '~/components/modules/auth/wallet/constants/wallet-kit.constant'
+import http from '~/core/config/axios/http'
+import { signTransaction } from '~/lib/stellar-wallet-kit'
 
 export const fundEscrow = async (payload: FundEscrowPayload) => {
-  try {
-    const { address } = await kit.getAddress();
+	try {
+		const { address } = await kit.getAddress()
 
-    const response = await http.post("/escrow/fund-escrow", payload);
-    const { unsignedTransaction } = response.data;
+		const response = await http.post('/escrow/fund-escrow', payload)
+		const { unsignedTransaction } = response.data
 
-    const signedTxXdr = await signTransaction({ unsignedTransaction, address });
+		const signedTxXdr = await signTransaction({ unsignedTransaction, address })
 
-    const tx = await http.post("/helper/send-transaction", {
-      signedXdr: signedTxXdr,
-    });
+		const tx = await http.post('/helper/send-transaction', {
+			signedXdr: signedTxXdr,
+		})
 
-    const { data } = tx;
-    return data;
-  } catch (error: unknown) {
-    if (axios.isAxiosError(error)) {
-      console.error("Axios Error:", error.response?.data || error.message);
-      throw new Error(
-        error.response?.data?.message || "Error in Axios request",
-      );
-    // biome-ignore lint/style/noUselessElse: <explanation>
-    } else {
-      console.error("Unexpected Error:", error);
-      throw new Error("Unexpected error occurred");
-    }
-  }
-};
+		const { data } = tx
+		return data
+	} catch (error: unknown) {
+		if (axios.isAxiosError(error)) {
+			console.error('Axios Error:', error.response?.data || error.message)
+			throw new Error(error.response?.data?.message || 'Error in Axios request')
+			// biome-ignore lint/style/noUselessElse: <explanation>
+		} else {
+			console.error('Unexpected Error:', error)
+			throw new Error('Unexpected error occurred')
+		}
+	}
+}

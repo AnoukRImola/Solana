@@ -1,15 +1,15 @@
-"use client";
+'use client'
 
 interface useQREscrowDialogProps {
-  setIsQRDialogOpen: (value: boolean) => void;
+	setIsQRDialogOpen: (value: boolean) => void
 }
 
 const useQREscrowDialog = ({ setIsQRDialogOpen }: useQREscrowDialogProps) => {
-  const handleClose = () => {
-    setIsQRDialogOpen(false);
-  };
+	const handleClose = () => {
+		setIsQRDialogOpen(false)
+	}
 
-  return { handleClose };
-};
+	return { handleClose }
+}
 
-export default useQREscrowDialog;
+export default useQREscrowDialog

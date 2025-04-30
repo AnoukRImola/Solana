@@ -1,9 +1,9 @@
-"use client";
+'use client'
 
-import Settings from "~/components/modules/setting/Settings";
+import Settings from '~/components/modules/setting/Settings'
 
 const SettingsPage: React.FC = () => {
-  return <Settings />;
-};
+	return <Settings />
+}
 
-export default SettingsPage;
+export default SettingsPage

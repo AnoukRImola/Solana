@@ -1,137 +1,137 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-"use client";
+'use client'
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import type { z } from "zod";
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useForm } from 'react-hook-form'
+import type { z } from 'zod'
+import type { EscrowPayload, Milestone } from '~/@types/escrow.entity'
 import {
-  useGlobalAuthenticationStore,
-  useGlobalBoundedStore,
-} from "~/core/store/data";
-import { formSchema } from "../../../schema/edit-milestone.schema";
-import type { EscrowPayload, Milestone } from "~/@types/escrow.entity";
-import { useEscrowUIBoundedStore } from "../../../store/ui";
-import { toast } from "~/hooks/toast.hook";
-import { editEscrow } from "../../../services/edit-escrow.service";
+	useGlobalAuthenticationStore,
+	useGlobalBoundedStore,
+} from '~/core/store/data'
+import { toast } from '~/hooks/toast.hook'
+import { formSchema } from '../../../schema/edit-milestone.schema'
+import { editEscrow } from '../../../services/edit-escrow.service'
+import { useEscrowUIBoundedStore } from '../../../store/ui'
 
 interface useEditMilestonesDialogProps {
-  setIsEditMilestoneDialogOpen: (value: boolean) => void;
+	setIsEditMilestoneDialogOpen: (value: boolean) => void
 }
 
 const useEditMilestonesDialog = ({
-  setIsEditMilestoneDialogOpen,
+	setIsEditMilestoneDialogOpen,
 }: useEditMilestonesDialogProps) => {
-  const { address } = useGlobalAuthenticationStore();
-  const selectedEscrow = useGlobalBoundedStore((state) => state.selectedEscrow);
-  const setIsEditingMilestones = useEscrowUIBoundedStore(
-    (state) => state.setIsEditingMilestones,
-  );
-  const fetchAllEscrows = useGlobalBoundedStore(
-    (state) => state.fetchAllEscrows,
-  );
-  const activeTab = useEscrowUIBoundedStore((state) => state.activeTab);
-  const setIsDialogOpen = useEscrowUIBoundedStore(
-    (state) => state.setIsDialogOpen,
-  );
+	const { address } = useGlobalAuthenticationStore()
+	const selectedEscrow = useGlobalBoundedStore((state) => state.selectedEscrow)
+	const setIsEditingMilestones = useEscrowUIBoundedStore(
+		(state) => state.setIsEditingMilestones,
+	)
+	const fetchAllEscrows = useGlobalBoundedStore(
+		(state) => state.fetchAllEscrows,
+	)
+	const activeTab = useEscrowUIBoundedStore((state) => state.activeTab)
+	const setIsDialogOpen = useEscrowUIBoundedStore(
+		(state) => state.setIsDialogOpen,
+	)
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      milestones: selectedEscrow?.milestones || [{ description: "" }],
-    },
-    mode: "onChange",
-  });
+	const form = useForm<z.infer<typeof formSchema>>({
+		resolver: zodResolver(formSchema),
+		defaultValues: {
+			milestones: selectedEscrow?.milestones || [{ description: '' }],
+		},
+		mode: 'onChange',
+	})
 
-  const milestones: Milestone[] = form.watch("milestones");
-  const isAnyMilestoneEmpty = milestones.some(
-    (milestone) => milestone.description === "",
-  );
+	const milestones: Milestone[] = form.watch('milestones')
+	const isAnyMilestoneEmpty = milestones.some(
+		(milestone) => milestone.description === '',
+	)
 
-  const handleAddMilestone = () => {
-    const currentMilestones = form.getValues("milestones");
-    const updatedMilestones = [
-      ...currentMilestones,
-      { description: "", status: "pending" },
-    ];
-    form.setValue("milestones", updatedMilestones);
-  };
+	const handleAddMilestone = () => {
+		const currentMilestones = form.getValues('milestones')
+		const updatedMilestones = [
+			...currentMilestones,
+			{ description: '', status: 'pending' },
+		]
+		form.setValue('milestones', updatedMilestones)
+	}
 
-  const handleRemoveMilestone = (index: number) => {
-    const currentMilestones = form.getValues("milestones");
-    const updatedMilestones = currentMilestones.filter((_, i) => i !== index);
-    form.setValue("milestones", updatedMilestones);
-  };
+	const handleRemoveMilestone = (index: number) => {
+		const currentMilestones = form.getValues('milestones')
+		const updatedMilestones = currentMilestones.filter((_, i) => i !== index)
+		form.setValue('milestones', updatedMilestones)
+	}
 
-  const onSubmit = async (payload: z.infer<typeof formSchema>) => {
-    if (!selectedEscrow) return;
+	const onSubmit = async (payload: z.infer<typeof formSchema>) => {
+		if (!selectedEscrow) return
 
-    setIsEditingMilestones(true);
+		setIsEditingMilestones(true)
 
-    try {
-      const updatedEscrow = {
-        ...JSON.parse(JSON.stringify(selectedEscrow)),
-        milestones: payload.milestones,
-      };
+		try {
+			const updatedEscrow = {
+				...JSON.parse(JSON.stringify(selectedEscrow)),
+				milestones: payload.milestones,
+			}
 
-      // Plain the trustline
-      if (
-        updatedEscrow.trustline &&
-        typeof updatedEscrow.trustline === "object"
-      ) {
-        updatedEscrow.trustlineDecimals =
-          updatedEscrow.trustline.trustlineDecimals;
-        updatedEscrow.trustline = updatedEscrow.trustline.trustline;
-      }
+			// Plain the trustline
+			if (
+				updatedEscrow.trustline &&
+				typeof updatedEscrow.trustline === 'object'
+			) {
+				updatedEscrow.trustlineDecimals =
+					updatedEscrow.trustline.trustlineDecimals
+				updatedEscrow.trustline = updatedEscrow.trustline.trustline
+			}
 
-      delete updatedEscrow.createdAt;
-      delete updatedEscrow.updatedAt;
-      delete updatedEscrow.id;
+			delete updatedEscrow.createdAt
+			delete updatedEscrow.updatedAt
+			delete updatedEscrow.id
 
-      const newPayload = {
-        escrow: updatedEscrow as EscrowPayload,
-        signer: address,
-        contractId: selectedEscrow.contractId || "",
-      };
+			const newPayload = {
+				escrow: updatedEscrow as EscrowPayload,
+				signer: address,
+				contractId: selectedEscrow.contractId || '',
+			}
 
-      const response = await editEscrow(newPayload);
+			const response = await editEscrow(newPayload)
 
-      if (response.status === "SUCCESS") {
-        fetchAllEscrows({ address, type: activeTab || "approver" });
-        setIsEditMilestoneDialogOpen(false);
-        setIsDialogOpen(false);
+			if (response.status === 'SUCCESS') {
+				fetchAllEscrows({ address, type: activeTab || 'approver' })
+				setIsEditMilestoneDialogOpen(false)
+				setIsDialogOpen(false)
 
-        toast({
-          title: "Success",
-          description: `You have edited the milestones of ${selectedEscrow.title}.`,
-        });
-      }
+				toast({
+					title: 'Success',
+					description: `You have edited the milestones of ${selectedEscrow.title}.`,
+				})
+			}
 
-      setIsEditingMilestones(false);
-    } catch (error: any) {
-      setIsEditingMilestones(false);
+			setIsEditingMilestones(false)
+		} catch (error: any) {
+			setIsEditingMilestones(false)
 
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
+			toast({
+				title: 'Error',
+				description: error.message,
+				variant: 'destructive',
+			})
+		}
+	}
 
-  const handleClose = () => {
-    setIsEditMilestoneDialogOpen(false);
-  };
+	const handleClose = () => {
+		setIsEditMilestoneDialogOpen(false)
+	}
 
-  return {
-    onSubmit,
-    form,
-    handleClose,
-    milestones,
-    handleAddMilestone,
-    handleRemoveMilestone,
-    isAnyMilestoneEmpty,
-  };
-};
+	return {
+		onSubmit,
+		form,
+		handleClose,
+		milestones,
+		handleAddMilestone,
+		handleRemoveMilestone,
+		isAnyMilestoneEmpty,
+	}
+}
 
-export default useEditMilestonesDialog;
+export default useEditMilestonesDialog

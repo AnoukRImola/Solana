@@ -1,30 +1,30 @@
-import type { StateCreator } from "zustand";
-import { getAllTrustlines } from "~/components/modules/token/server/trustline.firebase";
-import type { TrustlineGlobalStore } from "../@types/trustlines.entity";
+import type { StateCreator } from 'zustand'
+import { getAllTrustlines } from '~/components/modules/token/server/trustline.firebase'
+import type { TrustlineGlobalStore } from '../@types/trustlines.entity'
 
 const TRUSTLINE_ACTIONS = {
-  SET_TRUSTLINES: "trustlines/setTrustlines",
-} as const;
+	SET_TRUSTLINES: 'trustlines/setTrustlines',
+} as const
 
 export const useGlobalTrustlinesSlice: StateCreator<
-  TrustlineGlobalStore,
-  [["zustand/devtools", never]],
-  [],
-  TrustlineGlobalStore
+	TrustlineGlobalStore,
+	[['zustand/devtools', never]],
+	[],
+	TrustlineGlobalStore
 > = (set) => {
-  return {
-    // Stores
-    trustlines: [],
+	return {
+		// Stores
+		trustlines: [],
 
-    // Modifiers
-    getAllTrustlines: async () => {
-      const { success, message, data } = await getAllTrustlines();
+		// Modifiers
+		getAllTrustlines: async () => {
+			const { success, message, data } = await getAllTrustlines()
 
-      if (success) {
-        set({ trustlines: data }, false, TRUSTLINE_ACTIONS.SET_TRUSTLINES);
-      } else {
-        console.error(message);
-      }
-    },
-  };
-};
+			if (success) {
+				set({ trustlines: data }, false, TRUSTLINE_ACTIONS.SET_TRUSTLINES)
+			} else {
+				console.error(message)
+			}
+		},
+	}
+}

@@ -1,62 +1,58 @@
-import type {
-  Escrow,
-  EscrowPayload,
-  BalanceItem,
-} from "~/@types/escrow.entity";
-import { getAllEscrowsByUser, updateEscrow } from "../server/escrow.firebase";
-import { getBalance } from "./get-balance.service";
+import type { BalanceItem, Escrow, EscrowPayload } from '~/@types/escrow.entity'
+import { getAllEscrowsByUser, updateEscrow } from '../server/escrow.firebase'
+import { getBalance } from './get-balance.service'
 
 export const fetchAllEscrows = async ({
-  address,
-  type = "approver",
+	address,
+	type = 'approver',
 }: {
-  address: string;
-  type: string;
+	address: string
+	type: string
 }): Promise<Escrow[]> => {
-  const escrowsByUser = await getAllEscrowsByUser({ address, type });
-  const contractIds = escrowsByUser.data.map(
-    (escrow: Escrow) => escrow.contractId,
-  );
+	const escrowsByUser = await getAllEscrowsByUser({ address, type })
+	const contractIds = escrowsByUser.data.map(
+		(escrow: Escrow) => escrow.contractId,
+	)
 
-  if (!Array.isArray(contractIds)) {
-    throw new Error("contractIds is not a valid array.");
-  }
+	if (!Array.isArray(contractIds)) {
+		throw new Error('contractIds is not a valid array.')
+	}
 
-  const response = await getBalance(address, contractIds);
-  const balances = response.data as BalanceItem[];
+	const response = await getBalance(address, contractIds)
+	const balances = response.data as BalanceItem[]
 
-  return Promise.all(
-    escrowsByUser.data.map(async (escrow: Escrow) => {
-      const matchedBalance = balances.find(
-        (item) => item.address === escrow.contractId,
-      );
+	return Promise.all(
+		escrowsByUser.data.map(async (escrow: Escrow) => {
+			const matchedBalance = balances.find(
+				(item) => item.address === escrow.contractId,
+			)
 
-      const plainBalance = matchedBalance ? matchedBalance.balance : 0;
-      const currentBalance = escrow.balance ? Number(escrow.balance) : 0;
+			const plainBalance = matchedBalance ? matchedBalance.balance : 0
+			const currentBalance = escrow.balance ? Number(escrow.balance) : 0
 
-      if (currentBalance !== plainBalance) {
-        await updateEscrow({
-          escrowId: escrow.id,
-          payload: { balance: String(plainBalance) },
-        });
-        escrow.balance = String(plainBalance);
-      }
+			if (currentBalance !== plainBalance) {
+				await updateEscrow({
+					escrowId: escrow.id,
+					payload: { balance: String(plainBalance) },
+				})
+				escrow.balance = String(plainBalance)
+			}
 
-      return escrow;
-    }),
-  );
-};
+			return escrow
+		}),
+	)
+}
 
 export const updateExistingEscrow = async ({
-  escrowId,
-  payload,
+	escrowId,
+	payload,
 }: {
-  escrowId: string;
-  payload: Partial<EscrowPayload>;
+	escrowId: string
+	payload: Partial<EscrowPayload>
 }): Promise<Escrow | undefined> => {
-  const response = await updateEscrow({
-    escrowId,
-    payload: { ...payload, balance: String(payload.balance || 0) },
-  });
-  return response?.data;
-};
+	const response = await updateEscrow({
+		escrowId,
+		payload: { ...payload, balance: String(payload.balance || 0) },
+	})
+	return response?.data
+}
