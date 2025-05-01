@@ -1,0 +1,1 @@
+web: cd apps/server && bun run start:prod
