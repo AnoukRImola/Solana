@@ -1,1 +1,1 @@
-web: cd apps/server && bun run start:prod
+web: cd apps/server && npm run start:prod
