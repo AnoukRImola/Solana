@@ -9,6 +9,7 @@
 		"ignoreUnknown": false,
 		"ignore": [
 			"./apps/dashboard/.next",
+			"./apps/server/dist/",
 			".vercel",
 			".vscode",
 			"node_modules",
@@ -46,5 +47,17 @@
 	},
 	"javascript": {
 		"formatter": { "quoteStyle": "single", "semicolons": "asNeeded" }
-	}
+	},
+	"overrides": [
+		{
+			"include": ["./apps/server/src/**/*"],
+			"linter": {
+				"rules": {
+					"style": {
+						"useImportType": "off"
+					}
+				}
+			}
+		}
+	]
 }
