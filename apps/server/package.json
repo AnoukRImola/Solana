@@ -43,7 +43,11 @@
 		"reflect-metadata": "^0.2.0",
 		"rxjs": "^7.8.1",
 		"stellar-sdk": "^12.2.0",
-		"web3": "^4.16.0"
+		"web3": "^4.16.0",
+		"@project-serum/borsh": "^0.2.5",
+		"@solana/web3.js": "^1.98.2",
+		"bn.js": "^5.2.2",
+		"borsh": "^2.0.0"
 	},
 	"devDependencies": {
 		"@nestjs/cli": "^10.0.0",
@@ -67,6 +71,9 @@
 		"ts-node": "^10.9.1",
 		"tsconfig-paths": "^4.2.0",
 		"typescript-eslint": "^8.31.1"
+	},
+	"peerDependencies": {
+		"buffer-layout": "1.2.2"
 	},
 	"jest": {
 		"moduleFileExtensions": ["js", "json", "ts"],
