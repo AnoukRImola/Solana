@@ -1,0 +1,79 @@
+use anchor_lang::prelude::*;
+
+use crate::{
+    error::EscrowError,
+    state::types::EscrowData,
+    utils::{
+        // events::emit_escrow_event,
+        validators::milestone::{
+            validate_milestone_flag_change_conditions,
+            validate_milestone_status_change_conditions,
+        }
+    },
+};
+
+#[derive(Accounts)]
+pub struct ChangeMilestoneStatus<'info> {
+    #[account(mut)]
+    pub service_provider: Signer<'info>,
+    #[account(mut)]
+    pub escrow_account: Account<'info, EscrowData>,
+}
+
+pub fn change_milestone_status_handler(
+    ctx: Context<ChangeMilestoneStatus>,
+    milestone_index: usize,
+    new_status: String,
+    new_evidence: Option<String>,
+) -> Result<()> {
+    let escrow = &mut ctx.accounts.escrow_account;
+
+    validate_milestone_status_change_conditions(
+        escrow,
+        milestone_index,
+        &ctx.accounts.service_provider.key(),
+    )?;
+
+    if let Some(milestone) = escrow.milestones.get_mut(milestone_index) {
+        milestone.status = new_status;
+        if let Some(evidence) = new_evidence {
+            milestone.evidence = evidence;
+        }
+    } else {
+        return Err(EscrowError::InvalidMileStoneIndex.into());
+    }
+
+    // emit_escrow_event(escrow.engagement_id.clone(), escrow.clone());
+    Ok(())
+}
+
+#[derive(Accounts)]
+pub struct ChangeMilestoneFlag<'info> {
+    #[account(mut)]
+    pub approver: Signer<'info>,
+    #[account(mut)]
+    pub escrow_account: Account<'info, EscrowData>,
+}
+
+pub fn change_milestone_flag_handler(
+    ctx: Context<ChangeMilestoneFlag>,
+    milestone_index: usize,
+    new_flag: bool,
+) -> Result<()> {
+    let escrow = &mut ctx.accounts.escrow_account;
+
+    validate_milestone_flag_change_conditions(
+        escrow,
+        milestone_index,
+        &ctx.accounts.approver.key(),
+    )?;
+
+    if let Some(milestone) = escrow.milestones.get_mut(milestone_index) {
+        milestone.approved_flag = new_flag;
+    } else {
+        return Err(EscrowError::InvalidMileStoneIndex.into());
+    }
+
+    // emit_escrow_event(escrow.engagement_id.clone(), escrow.clone());
+    Ok(())
+}
