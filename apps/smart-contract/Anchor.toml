@@ -1,12 +1,18 @@
 [toolchain]
-package_manager = "yarn"
+anchor_version = "0.31.1"
+solana_version = "2.1.0"
+
+[workspace]
+members = [
+  "programs/escrow",
+]
 
 [features]
 resolution = true
 skip-lint = false
 
 [programs.localnet]
-trustless_work_solana_contract = "A2f8EQ1iYEFLkiN1UTDBkMYKR2Hxw7vqBb8srcVjGxk4"
+escrow = "A2f8EQ1iYEFLkiN1UTDBkMYKR2Hxw7vqBb8srcVjGxk4"
 
 [registry]
 url = "https://api.apr.dev"
