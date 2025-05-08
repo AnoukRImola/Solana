@@ -1,3 +1,4 @@
+#![allow(unexpected_cfgs)]
 use anchor_lang::prelude::*;
 
 mod context;
@@ -22,13 +23,13 @@ pub mod escrow {
     pub fn initialize_escrow(
         ctx: Context<InitializeEscrow>,
         new_escrow: state::EscrowData,
-    ) -> std::result::Result<EscrowData, EscrowError>  {
+    ) -> Result<EscrowData>  {
         instructions::escrow::initialize_escrow_handler(ctx, new_escrow)
     }
 
     pub fn get_escrow(
         ctx: Context<GetEscrow>,
-    ) -> std::result::Result<EscrowData, EscrowError>  {
+    ) -> Result<EscrowData>  {
         instructions::escrow::get_escrow_handler(ctx)
     }
 
@@ -56,13 +57,13 @@ pub mod escrow {
         instructions::escrow::change_escrow_properties_handler(ctx, new_data)
     }
 
-    pub fn fund_escrow(ctx: Context<FundEscrow>, amount: u64) -> Result<()> {
-        instructions::escrow::fund_escrow_handler(ctx, amount)
+    pub fn fund_escrow(ctx: Context<FundEscrow>, amount: u64, bump: u8) -> Result<()> {
+        instructions::escrow::fund_escrow_handler(ctx, amount, bump)
     }
 
     pub fn change_milestone_status(
         ctx: Context<ChangeMilestoneStatus>,
-        milestone_index: usize,
+        milestone_index: i128,
         new_status: String,
         new_evidence: Option<String>,
     ) -> Result<()> {
@@ -76,7 +77,7 @@ pub mod escrow {
 
     pub fn change_milestone_flag(
         ctx: Context<ChangeMilestoneFlag>,
-        milestone_index: usize,
+        milestone_index: i128,
         new_flag: bool,
     ) -> Result<()> {
         instructions::milestone::change_milestone_flag_handler(ctx, milestone_index, new_flag)
