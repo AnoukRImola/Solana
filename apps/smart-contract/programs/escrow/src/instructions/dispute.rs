@@ -3,10 +3,10 @@ use anchor_lang::prelude::*;
 use crate::{
     context::{ChangeDisputeFlag, ResolveDispute},
     utils::{
-        fee::calculator::{FeeCalculator, FeeCalculatorTrait},
-        token::transfer_handler::{transfer_from_escrow, has_sufficient_balance},
-        math::basic::{BasicArithmetic, BasicMath},
-        validators::dispute::{
+        fee_calculator::{FeeCalculator, FeeCalculatorTrait},
+        token_transfer_handler::{transfer_from_escrow, has_sufficient_balance},
+        math_basic::{BasicArithmetic, BasicMath},
+        dispute_validators::{
             validate_dispute_flag_change_conditions, validate_dispute_resolution_conditions
         },
         // events::emit_escrow_event,

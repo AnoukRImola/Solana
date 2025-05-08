@@ -1,22 +1,21 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{transfer, Transfer};
 
 use crate::{
     context::{InitializeEscrow, FundEscrow, ChangeEscrowProperties, ReleaseFunds, GetEscrow}, 
     errors::EscrowError,
     state::EscrowData, 
     utils::{
-        fee::calculator::{FeeCalculator, FeeCalculatorTrait, StandardFeeResult},
-        validators::escrow::{
+        fee_calculator::{FeeCalculator, FeeCalculatorTrait, StandardFeeResult},
+        escrow_validators::{
             validate_escrow_property_change_conditions, validate_funding_conditions, validate_release_conditions, validate_initialize_escrow_conditions
         },
-        token::transfer_handler::{transfer_from_escrow, has_sufficient_balance},
+        token_transfer_handler::{transfer_from_escrow, has_sufficient_balance},
         // events::emit_escrow_event,
     }
 };
 
 
-pub fn initialize_escrow_handler(ctx: Context<InitializeEscrow>, new_escrow: EscrowData) -> std::result::Result<EscrowData, EscrowError> {
+pub fn initialize_escrow_handler(ctx: Context<InitializeEscrow>, new_escrow: EscrowData) -> Result<EscrowData> {
     let escrow = &mut ctx.accounts.escrow_account;
     let escrow_account_info = escrow.to_account_info();
 
@@ -99,7 +98,7 @@ pub fn change_escrow_properties_handler(
     Ok(())
 }
 
-pub fn fund_escrow_handler(ctx: Context<FundEscrow>, amount: u64) -> Result<()> {
+pub fn fund_escrow_handler(ctx: Context<FundEscrow>, amount: u64, bump: u8) -> Result<()> {
     let escrow = &ctx.accounts.escrow_account;
     let signer_balance = ctx.accounts.user_token_account.amount;
     let contract_balance = ctx.accounts.escrow_token_account.amount;
@@ -111,26 +110,25 @@ pub fn fund_escrow_handler(ctx: Context<FundEscrow>, amount: u64) -> Result<()> 
         amount as i128,
     )?;
 
-    transfer(
-        CpiContext::new(
-            ctx.accounts.token_program.to_account_info(),
-            Transfer {
-                from: ctx.accounts.user_token_account.to_account_info(),
-                to: ctx.accounts.escrow_token_account.to_account_info(),
-                authority: ctx.accounts.signer.to_account_info(),
-            },
-        ),
+    let authority_seeds = &[b"escrow", escrow.engagement_id.as_bytes(), &[bump]];
+
+    transfer_from_escrow(
         amount,
+        ctx.accounts.user_token_account.to_account_info(),
+        ctx.accounts.escrow_token_account.to_account_info(),
+        ctx.accounts.signer.to_account_info(),
+        ctx.accounts.token_program.to_account_info(),
+        authority_seeds,
     )?;
 
     Ok(())
 }
 
-pub fn get_escrow_handler(ctx: Context<GetEscrow>) -> std::result::Result<EscrowData, EscrowError> {
+pub fn get_escrow_handler(ctx: Context<GetEscrow>) -> Result<EscrowData> {
     let account_info = &ctx.accounts.escrow_account;
 
     if account_info.data_is_empty() {
-        return Err(EscrowError::EscrowNotFound);
+        return Err(EscrowError::EscrowNotFound.into());
     }
 
     let escrow_data: EscrowData = EscrowData::try_deserialize(&mut &account_info.data.borrow()[..])

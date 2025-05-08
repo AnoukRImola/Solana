@@ -2,7 +2,8 @@ use anchor_lang::prelude::*;
 
 use crate::{
     context::{ChangeMilestoneFlag, ChangeMilestoneStatus},
-    errors::EscrowError, utils::validators::milestone::{
+    errors::EscrowError, 
+    milestone_validators::{
         validate_milestone_flag_change_conditions,
         validate_milestone_status_change_conditions,
     },
@@ -10,7 +11,7 @@ use crate::{
 
 pub fn change_milestone_status_handler(
     ctx: Context<ChangeMilestoneStatus>,
-    milestone_index: usize,
+    milestone_index: i128,
     new_status: String,
     new_evidence: Option<String>,
 ) -> Result<()> {
@@ -22,7 +23,7 @@ pub fn change_milestone_status_handler(
         &ctx.accounts.service_provider.key(),
     )?;
 
-    if let Some(milestone) = escrow.milestones.get_mut(milestone_index) {
+    if let Some(milestone) = escrow.milestones.get_mut(milestone_index as usize) {
         milestone.status = new_status;
         if let Some(evidence) = new_evidence {
             milestone.evidence = evidence;
@@ -37,7 +38,7 @@ pub fn change_milestone_status_handler(
 
 pub fn change_milestone_flag_handler(
     ctx: Context<ChangeMilestoneFlag>,
-    milestone_index: usize,
+    milestone_index: i128,
     new_flag: bool,
 ) -> Result<()> {
     let escrow = &mut ctx.accounts.escrow_account;
@@ -48,7 +49,7 @@ pub fn change_milestone_flag_handler(
         &ctx.accounts.approver.key(),
     )?;
 
-    if let Some(milestone) = escrow.milestones.get_mut(milestone_index) {
+    if let Some(milestone) = escrow.milestones.get_mut(milestone_index as usize) {
         milestone.approved_flag = new_flag;
     } else {
         return Err(EscrowError::InvalidMileStoneIndex.into());
