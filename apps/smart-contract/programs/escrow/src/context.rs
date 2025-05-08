@@ -11,8 +11,10 @@ pub struct ResolveDispute<'info> {
     pub dispute_resolver: Signer<'info>,
 
     #[account(mut)]
+    /// CHECK: This is the PDA that signs token transfers. Its correctness is guaranteed by the seeds used.
     pub escrow_account: Account<'info, EscrowData>,
 
+    /// CHECK: This is the PDA that signs token transfers. Its correctness is guaranteed by the seeds used.
     pub escrow_authority: AccountInfo<'info>,
 
     #[account(mut)]
@@ -35,6 +37,7 @@ pub struct ChangeDisputeFlag<'info> {
     #[account(mut)]
     pub signer: Signer<'info>,
     #[account(mut)]
+    /// CHECK: This is the PDA that signs token transfers. Its correctness is guaranteed by the seeds used.
     pub escrow_account: Account<'info, EscrowData>,
 }
 
@@ -42,6 +45,7 @@ pub struct ChangeDisputeFlag<'info> {
 #[derive(Accounts)]
 pub struct InitializeEscrow<'info> {
     #[account(mut)]
+    /// CHECK: This is the PDA that signs token transfers. Its correctness is guaranteed by the seeds used.
     pub escrow_account: Account<'info, EscrowData>,
 
     #[account(mut)]
@@ -55,7 +59,10 @@ pub struct ReleaseFunds<'info> {
     #[account(mut)]
     pub release_signer: Signer<'info>,
     #[account(mut)]
+    /// CHECK: This is the PDA that signs token transfers. Its correctness is guaranteed by the seeds used.
     pub escrow_account: Account<'info, EscrowData>,
+
+    /// CHECK: This is the PDA that signs token transfers. Its correctness is guaranteed by the seeds used.
     pub escrow_authority: AccountInfo<'info>,
     #[account(mut)]
     pub escrow_token_account: Account<'info, TokenAccount>,
@@ -73,6 +80,7 @@ pub struct ChangeEscrowProperties<'info> {
     #[account(mut)]
     pub platform_signer: Signer<'info>,
     #[account(mut)]
+    /// CHECK: This is the PDA that signs token transfers. Its correctness is guaranteed by the seeds used.
     pub escrow_account: Account<'info, EscrowData>,
     #[account(mut)]
     pub escrow_token_account: Account<'info, TokenAccount>,
@@ -83,6 +91,7 @@ pub struct FundEscrow<'info> {
     #[account(mut)]
     pub signer: Signer<'info>,
     #[account(mut)]
+    /// CHECK: This is the PDA that signs token transfers. Its correctness is guaranteed by the seeds used.
     pub escrow_account: Account<'info, EscrowData>,
     #[account(mut)]
     pub escrow_token_account: Account<'info, TokenAccount>,
@@ -93,6 +102,7 @@ pub struct FundEscrow<'info> {
 
 #[derive(Accounts)]
 pub struct GetEscrow<'info> {
+    /// CHECK: This is the PDA that signs token transfers. Its correctness is guaranteed by the seeds used.
     pub escrow_account: AccountInfo<'info>,
 }
 
@@ -111,5 +121,6 @@ pub struct ChangeMilestoneFlag<'info> {
     #[account(mut)]
     pub approver: Signer<'info>,
     #[account(mut)]
+    /// CHECK: This is the PDA that signs token transfers. Its correctness is guaranteed by the seeds used.
     pub escrow_account: Account<'info, EscrowData>,
 }
