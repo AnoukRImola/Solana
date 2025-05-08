@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
-use anchor_lang::Discriminator;
 
+/// Escrow State
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, PartialEq)]
 pub struct Milestone {
     pub description: String,
@@ -47,6 +47,12 @@ pub struct EscrowData {
     pub roles: Roles,
 }
 
+/// Token State
+#[account]
+pub struct TokenAdmin {
+    pub admin: Pubkey,
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct AddressBalance {
     pub address: Pubkey,
@@ -60,10 +66,27 @@ pub struct AllowanceValue {
     pub expiration_slot: u32,
 }
 
-#[derive(Clone, Debug, PartialEq)]
-pub struct AllowanceKey {
+#[account]
+pub struct Allowance {
     pub from: Pubkey,
     pub spender: Pubkey,
+    pub amount: i128,
+    pub expiration_slot: u64,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, PartialEq)]
+pub struct TokenMetadata {
+    pub name: String,
+    pub symbol: String,
+    pub decimals: u8,
+}
+
+#[account]
+#[derive(Debug)]
+pub struct MetadataAccount {
+    pub name: String,
+    pub symbol: String,
+    pub decimals: u8,
 }
 
 // #[derive(Clone, Debug, PartialEq)]
