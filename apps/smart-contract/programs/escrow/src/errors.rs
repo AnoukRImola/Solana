@@ -47,4 +47,18 @@ pub enum EscrowError {
     #[msg("Unauthorized to change dispute flag")] UnauthorizedToChangeDisputeFlag,
     #[msg("Argument conversion failed")] ArgumentConversionFailed,
     #[msg("Too many milestones in escrow")] TooManyMilestones,
+    #[msg("Allowance has expired")]
+    AllowanceExpired,
+    #[msg("Insufficient allowance")]
+    InsufficientAllowance,
+    #[msg("Invalid expiration slot")]
+    InvalidExpirationSlot,
+    #[msg("Decimal must not be greater than 18")]
+    DecimalExceedsLimit,
+    #[msg("Unauthorized")]
+    Unauthorized,
+    #[msg("Invalid decimals")]
+    InvalidDecimals,
+    #[msg("Already initialized")]
+    AlreadyInitialized,
 }
