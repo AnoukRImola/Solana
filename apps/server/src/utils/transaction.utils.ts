@@ -13,9 +13,9 @@ export function buildTransaction(
 		networkPassphrase,
 	}).setTimeout(timeout)
 
-	operations.forEach((operation) => {
+	for (const operation of operations) {
 		transactionBuilder.addOperation(operation)
-	})
+	}
 
 	return transactionBuilder.build()
 }
@@ -62,7 +62,7 @@ export async function signAndSendTransaction(
 	server: StellarSDK.SorobanRpc.Server,
 	prepareTransaction: boolean,
 ): Promise<StellarSDK.rpc.Api.GetSuccessfulTransactionResponse> {
-	let response: any
+	let response: StellarSDK.rpc.Api.SendTransactionResponse
 
 	if (prepareTransaction) {
 		const preparedTransaction = await server.prepareTransaction(transaction)
@@ -83,12 +83,12 @@ export async function signAndSendTransaction(
 
 		if (getResponse.status === 'SUCCESS') {
 			return getResponse
-		} else {
-			throw new Error(
-				`Transaction failed: ${JSON.stringify(getResponse.resultXdr)}`,
-			)
 		}
-	} else {
-		throw new Error(`Transaction submission failed: ${response.errorResult}`)
+
+		throw new Error(
+			`Transaction failed: ${JSON.stringify(getResponse.resultXdr)}`,
+		)
 	}
+
+	throw new Error(`Transaction submission failed: ${response.errorResult}`)
 }

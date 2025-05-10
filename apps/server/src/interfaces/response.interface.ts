@@ -1,4 +1,5 @@
 import type * as StellarSDK from '@stellar/stellar-sdk'
+import { Escrow } from 'src/interfaces/escrow.interface'
 import type { Milestone } from './milestone.interface'
 
 export interface ApiResponse {
@@ -8,7 +9,7 @@ export interface ApiResponse {
 	message?: string
 	contract_id?: string
 	engagement_id?: string
-	escrow?: escrowCamelCaseResponse
+	escrow?: EscrowCamelCaseResponse
 }
 
 export interface escrowResponse {
@@ -26,23 +27,4 @@ export interface escrowResponse {
 	dispute_flag: string
 }
 
-export interface escrowCamelCaseResponse {
-	engagementId: string
-	title: string
-	description: string
-	approver: string
-	serviceProvider: string
-	platformAddress: string
-	amount: number
-	platformFee: number
-	milestones: Milestone[]
-	releaseSigner: string
-	disputeResolver: string
-	disputeFlag: string
-	releaseFlag: string
-	resolvedFlag: string
-	trustline: string
-	trustline_decimals: number
-	receiver: string
-	receiver_memo: number
-}
+export interface EscrowCamelCaseResponse extends Escrow {}

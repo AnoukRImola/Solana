@@ -1,33 +1,58 @@
+import { PublicKey } from '@solana/web3.js'
 import type { Milestone } from './milestone.interface'
 
 export interface Escrow {
-	contractId?: string
-	engagementId: string
 	title: string
 	description: string
+	engagementId: string
+	receiver: string
+	trustline: string
 	approver: string
+	releaseSigner: string
 	serviceProvider: string
+	disputeResolver: string
 	platformAddress: string
 	amount: number
 	platformFee: number
+	receiverMemo: number
+	trustlineDecimals: number
+	disputeFlag: boolean
+	releaseFlag: boolean
+	resolvedFlag: boolean
 	milestones: Milestone[]
-	releaseSigner: string
-	disputeResolver: string
-	disputeFlag: string
-	releaseFlag: string
-	resolvedFlag: string
-	trustline: string
-	trustline_decimals: number
-	receiver: string
-	receiver_memo: number
 	swapData?: EscrowSwapData
+	contractId?: string
 }
 
 export interface EscrowSwapData {
-	originalCurrency: string
 	originalAmount: string
-	usdcAmount: string
+	originalCurrency: string
+	tokenAmount: string
+	tokenCurrency: string
 	conversionTxHash: string
 	conversionRate: string
 	conversionTimestamp: number
+}
+
+export interface EscrowStructure {
+	title: string
+	amount: string
+	description: string
+	engagementId: string
+	receiver: PublicKey
+	approver: PublicKey
+	trustline: PublicKey
+	releaseSigner: PublicKey
+	serviceProvider: PublicKey
+	disputeResolver: PublicKey
+	platformAddress: PublicKey
+	platformFee: number
+	receiverMemo: number
+	trustlineDecimals: number
+	disputeFlag: boolean
+	releaseFlag: boolean
+	resolvedFlag: boolean
+	milestones: Milestone[]
+	swapData?: EscrowSwapData
+	contractId?: string
 }

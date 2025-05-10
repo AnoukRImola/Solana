@@ -222,6 +222,7 @@ export class EscrowDto {
 export class EscrowSwapDataDTO {
 	@IsNotEmpty({ message: 'The original currency must not be empty' })
 	@IsString()
+	@IsAmountValid()
 	originalCurrency: string
 
 	@IsNotEmpty({ message: 'The conversion tx hash must not be empty' })
@@ -234,11 +235,22 @@ export class EscrowSwapDataDTO {
 
 	@IsNotEmpty({ message: 'The original amount must not be empty' })
 	@IsString()
+	@IsAmountValid()
 	originalAmount: string
 
-	@IsNotEmpty({ message: 'The usdc amount must not be empty' })
+	@IsNotEmpty({
+		message: 'The token amount to return or convert must not be empty',
+	})
 	@IsString()
-	usdcAmount: string
+	@IsAmountValid()
+	tokenAmount: string
+
+	@IsNotEmpty({
+		message: 'The token currency to return or convert must not be empty',
+	})
+	@IsString()
+	@IsAmountValid()
+	tokenCurrency: string
 
 	@IsNotEmpty({ message: 'The conversion rate must not be empty' })
 	@IsString()

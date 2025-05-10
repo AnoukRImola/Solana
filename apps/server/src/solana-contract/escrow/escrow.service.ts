@@ -1,17 +1,13 @@
+import type { AllbridgeService } from ''
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common'
 import * as StellarSDK from '@stellar/stellar-sdk'
 import type {
 	ApiResponse,
-	escrowCamelCaseResponse,
+	EscrowCamelCaseResponse,
 } from 'src/interfaces/response.interface'
-import {
-	adjustPricesToMicroUSDC,
-	parseEscrow,
-	parseEscrowByContractId,
-} from 'src/utils/parse.utils'
+import { mapErrorCodeToMessage } from 'src/utils/errors.utils'
+import { adjustPricesToMicroUSDC } from 'src/utils/parse.utils'
 import { buildTransaction } from 'src/utils/transaction.utils'
-import type { AllbridgeService } from '../../../src copy/solana/allbridge.service'
-import { mapErrorCodeToMessage } from '../../utils/errors.utils'
 import type { HelperService } from '../helper/helper.service'
 import type { PendingWriteQueueService } from '../queue/pending-write-queue.service'
 import type { EscrowDto } from './Dto/escrow.dto'
@@ -74,14 +70,14 @@ export class EscrowService {
 			const contract = new StellarSDK.Contract(contractId)
 			const account = await this.sorobanServer.getAccount(signer)
 
-			const { trustline_decimals } = await this.getEscrowByContractID(
+			const { trustlineDecimals } = await this.getEscrowByContractID(
 				signer,
 				contractId,
 			)
 
 			const adjustedPrice = adjustPricesToMicroUSDC(
 				escrowAmount,
-				trustline_decimals,
+				trustlineDecimals,
 			)
 			const scValPrice = StellarSDK.nativeToScVal(adjustedPrice, {
 				type: 'i128',
@@ -226,22 +222,22 @@ export class EscrowService {
 			const contract = new StellarSDK.Contract(contractId)
 			const account = await this.horizonServer.loadAccount(disputeResolver)
 
-			const { trustline_decimals } = await this.getEscrowByContractID(
+			const { trustlineDecimals } = await this.getEscrowByContractID(
 				disputeResolver,
 				contractId,
 			)
 
-			const adjustedApproverFunds = adjustPricesToMicroUSDC(
-				approverFunds,
-				trustline_decimals,
-			)
+			const adjustedApproverFunds = adjustPricesToMicroUSDC({
+				price: approverFunds,
+				decimals: trustlineDecimals,
+			})
 			const scValapproverFunds = StellarSDK.nativeToScVal(
 				adjustedApproverFunds,
 				{ type: 'i128' },
 			)
 			const adjustedServiceProviderFunds = adjustPricesToMicroUSDC(
 				receiverFunds,
-				trustline_decimals,
+				trustlineDecimals,
 			)
 			const scValServiceProviderFunds = StellarSDK.nativeToScVal(
 				adjustedServiceProviderFunds,
@@ -486,7 +482,7 @@ export class EscrowService {
 	async getEscrowByContractID(
 		signer,
 		contractId: string,
-	): Promise<escrowCamelCaseResponse> {
+	): Promise<EscrowCamelCaseResponse> {
 		try {
 			const contract = new StellarSDK.Contract(this.trustless_contract_id)
 			const account = await this.horizonServer.loadAccount(signer)

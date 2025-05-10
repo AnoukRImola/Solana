@@ -1,15 +1,12 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common'
+import * as borsh from '@project-serum/borsh'
 import * as StellarSDK from '@stellar/stellar-sdk'
 import {
 	ApiResponse,
-	escrowCamelCaseResponse,
+	EscrowCamelCaseResponse,
 } from 'src/interfaces/response.interface'
 import { mapErrorCodeToMessage } from 'src/utils/errors.utils'
-import {
-	microUSDToDecimal,
-	parseBalance,
-	parseScVal,
-} from 'src/utils/parse.utils'
+import { microUSDTToDecimal } from 'src/utils/parse.utils'
 import {
 	buildTransaction,
 	signAndSendTransaction,
@@ -47,10 +44,8 @@ export class HelperService {
 		saveInfo = true,
 	): Promise<ApiResponse> {
 		try {
-			const transaction = StellarSDK.TransactionBuilder.fromXDR(
-				signedXdr,
-				StellarSDK.Networks.TESTNET,
-			)
+			// TODO: Create Solana transaction...
+			const transaction = {} as any
 
 			const txHash = transaction.hash().toString('hex')
 
@@ -70,31 +65,33 @@ export class HelperService {
 
 			if (returnEscrowDataIsRequired) {
 				const data: any = await this.sorobanServer.getTransaction(response.hash)
+				// TODO: To Solana...
 				const transactionMeta = data.resultMetaXdr.v3().sorobanMeta()
 				const returnValue = transactionMeta.returnValue()
-				const result = parseScVal(returnValue)
-				const escrow: escrowCamelCaseResponse = {
-					amount: microUSDToDecimal(
-						Number(result[1].amount),
-						Number(result[1].trustline_decimals),
-					),
-					approver: result[1].approver,
-					description: result[1].description,
-					disputeFlag: result[1].dispute_flag,
-					releaseFlag: result[1].release_flag,
-					resolvedFlag: result[1].resolved_flag,
-					disputeResolver: result[1].dispute_resolver,
-					engagementId: result[1].engagement_id,
-					milestones: result[1].milestones,
-					platformAddress: result[1].platform_address,
-					platformFee: Number(result[1].platform_fee),
-					releaseSigner: result[1].release_signer,
-					serviceProvider: result[1].service_provider,
-					title: result[1].title,
-					trustline: result[1].trustline,
-					trustline_decimals: Number(result[1].trustline_decimals),
-					receiver: result[1].receiver,
-					receiver_memo: Number(result[1].receiver_memo),
+				// TODO: check this decode return value...
+				const [, escrowData] = borsh.vec(returnValue).decode(returnValue)
+				const escrow: EscrowCamelCaseResponse = {
+					amount: microUSDTToDecimal({
+						microToken: Number(escrowData.amount),
+						decimals: Number(escrowData.trustlineDecimals),
+					}),
+					approver: escrowData.approver,
+					description: escrowData.description,
+					disputeFlag: escrowData.dispute_flag,
+					releaseFlag: escrowData.release_flag,
+					resolvedFlag: escrowData.resolved_flag,
+					disputeResolver: escrowData.dispute_resolver,
+					engagementId: escrowData.engagement_id,
+					milestones: escrowData.milestones,
+					platformAddress: escrowData.platform_address,
+					platformFee: Number(escrowData.platform_fee),
+					releaseSigner: escrowData.release_signer,
+					serviceProvider: escrowData.service_provider,
+					title: escrowData.title,
+					trustline: escrowData.trustline,
+					trustlineDecimals: Number(escrowData.trustlineDecimals),
+					receiver: escrowData.receiver,
+					receiverMemo: Number(escrowData.receiver_memo),
 				}
 				return {
 					status: StellarSDK.rpc.Api.GetTransactionStatus.SUCCESS,
@@ -204,7 +201,7 @@ export class HelperService {
 				address: item.address,
 				balance: microUSDToDecimal(
 					item.balance,
-					Number(item.trustline_decimals),
+					Number(item.trustlineDecimals),
 				),
 			}))
 		} catch (error) {

@@ -7,10 +7,9 @@ import {
 	SystemProgram,
 	Transaction,
 	TransactionInstruction,
-	sendAndConfirmTransaction,
 } from '@solana/web3.js'
 import { ApiResponse } from 'src/interfaces/response.interface'
-import { serializeEscrowBorsh } from 'src/utils/parse.utils'
+import { serializeEscrow } from 'src/utils/parse.utils'
 import { PendingWriteQueueService } from '../queue/pending-write-queue.service'
 import { InvokeDeployerContractDto } from './Dto/deployer.dto'
 
@@ -35,14 +34,19 @@ export class DeployerService {
 		escrowProperties: InvokeDeployerContractDto,
 	): Promise<ApiResponse> {
 		try {
-			// 1. Générer une nouvelle adresse d'escrow (PDA ou Keypair)
 			const escrowAccount = Keypair.generate()
 
-			// 2. Sérialiser les données d'escrow avec Borsh (compatible Anchor)
-			const escrowData = serializeEscrowBorsh(escrowProperties)
+			// Définition par defaut jalon de l'escrow
+			for (const milestone of escrowProperties.milestones) {
+				milestone.approved_flag = false
+				milestone.status = 'pending'
+				milestone.evidence = ''
+				milestone.description = escrowProperties.description
+			}
 
-			// 3. Créer l'instruction d'initialisation (à adapter selon votre programme Solana)
-			const programId = new PublicKey('11111111111111111111111111111111') // TODO: remplacer par le vrai programme
+			const escrowData = serializeEscrow(escrowProperties)
+			// ? What programId to use ? Ask team. -Andler.
+			const programId = new PublicKey(escrowProperties.approver)
 			const instruction = new TransactionInstruction({
 				keys: [
 					{ pubkey: escrowAccount.publicKey, isSigner: true, isWritable: true },
@@ -52,7 +56,6 @@ export class DeployerService {
 				data: escrowData, // Données Borsh
 			})
 
-			// 4. Créer la transaction
 			const transaction = new Transaction().add(
 				SystemProgram.createAccount({
 					fromPubkey: this.payer.publicKey,
@@ -65,13 +68,11 @@ export class DeployerService {
 				instruction,
 			)
 
-			// 5. (Optionnel) Ajouter à la file d'attente pour traitement asynchrone
 			this.pendingWriteQueue.add(escrowAccount.publicKey.toBase58(), {
 				type: 'SAVE_ESCROW',
 				payload: { escrowProperties },
 			})
 
-			// 6. Retourner la transaction sérialisée (unsigned)
 			const unsignedTx = transaction
 				.serialize({ requireAllSignatures: false })
 				.toString('base64')
@@ -89,5 +90,3 @@ export class DeployerService {
 		}
 	}
 }
-// --- Fin de la refonte étape 1 ---
-// Prochaine étape : adaptation du controller pour utiliser ce service Solana.

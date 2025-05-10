@@ -14,7 +14,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import type {
   ApiResponse,
-  escrowCamelCaseResponse,
+  EscrowCamelCaseResponse,
 } from 'src/interfaces/response.interface';
 import {
   ApiChangeDisputeFlagKey,
@@ -26,7 +26,7 @@ import {
   ApiResolvingDisputesEscrow,
   ApiUpdateEscrowByContractId,
 } from 'src/swagger';
-import type {
+import {
   ChangeDisputeFlagDto,
   ChangeMilestoneFlagDto,
   ChangeMilestoneStatusDto,
@@ -36,7 +36,7 @@ import type {
   GetEscrowByEngagementIdDto,
   UpdateEscrowDTO,
 } from './Dto/escrow.dto';
-import type { EscrowService } from './escrow.service';
+import { EscrowService } from './escrow.service';
 
 @ApiTags('Escrow')
 @Controller('escrow')
@@ -323,7 +323,7 @@ export class EscrowController {
   @ApiBearerAuth('jwt-auth')
   async getEscrowByEngagementId(
     @Query() getEscrowByEngagementIdDto: GetEscrowByEngagementIdDto,
-  ): Promise<escrowCamelCaseResponse | ApiResponse> {
+  ): Promise<EscrowCamelCaseResponse | ApiResponse> {
     const { signer, contractId } = getEscrowByEngagementIdDto;
     try {
       const escrow = await this.escrowService.getEscrowByContractID(

@@ -1,6 +1,6 @@
 import * as StellarSDK from '@stellar/stellar-sdk'
 import { Milestone } from 'src/interfaces/milestone.interface'
-import { microUSDToDecimal } from './parse.utils'
+import { microUSDTToDecimal } from 'src/utils/parse.utils'
 
 function parseI128(val: any): number {
 	const { hi, lo } = val._value._attributes
@@ -17,17 +17,20 @@ export function handleKey(
 	key: string,
 	val: any,
 	parsed: Record<string, any>,
-	trustline_decimals: number,
+	trustlineDecimals: number,
 ) {
 	switch (key) {
 		case 'amount':
 			if (val._arm === 'i128') {
-				parsed[key] = microUSDToDecimal(parseI128(val), trustline_decimals)
+				parsed[key] = microUSDTToDecimal({
+					microToken: parseI128(val),
+					decimals: trustlineDecimals,
+				})
 			}
 			break
 		case 'platform_fee':
 		case 'receiver_memo':
-		case 'trustline_decimals':
+		case 'trustlineDecimals':
 			if (val._arm === 'i128') {
 				parsed[key] = parseI128(val)
 			}
@@ -63,7 +66,7 @@ export function handleKey(
 					const milestoneEntries = milestone._value
 					const milestoneParsed: Partial<Milestone> = {}
 
-					milestoneEntries.forEach((entry: any) => {
+					for (const entry of milestoneEntries as MilestoneEntry[]) {
 						const milestoneKey = entry._attributes.key._value.toString('utf8')
 						const milestoneVal = entry._attributes.val
 
@@ -78,14 +81,14 @@ export function handleKey(
 							milestoneKey === 'approved_flag' &&
 							milestoneVal._arm === 'b'
 						) {
-							milestoneParsed.approved_flag = milestoneVal._value
+							milestoneParsed.approved_flag = Boolean(milestoneVal._value)
 						} else if (
 							milestoneKey === 'evidence' &&
 							milestoneVal._arm === 'str'
 						) {
 							milestoneParsed.evidence = parseString(milestoneVal) ?? ''
 						}
-					})
+					}
 
 					return milestoneParsed as Milestone
 				})
@@ -93,5 +96,19 @@ export function handleKey(
 			break
 		default:
 			console.warn(`🔹 Unexpected key: ${key}`)
+	}
+}
+
+interface MilestoneEntry {
+	_attributes: {
+		key: {
+			_value: {
+				toString(encoding: string): string
+			}
+		}
+		val: {
+			_arm: string
+			_value: string | boolean
+		}
 	}
 }
