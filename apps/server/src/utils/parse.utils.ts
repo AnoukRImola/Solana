@@ -2,7 +2,12 @@ import * as borsh from '@project-serum/borsh'
 import { PublicKey } from '@solana/web3.js'
 import BN from 'bn.js'
 import { Structure } from 'buffer-layout.types'
-import { EscrowStructure } from 'src/interfaces/escrow.interface'
+import { ESCROW_ACCOUNT_STATE_SCHEMA } from 'src/config/constants/escrow-borsh-struct.constant'
+import {
+	EscrowStructure,
+	SmartContractEscrowStructure,
+} from 'src/interfaces/escrow.interface'
+import { EscrowCamelCaseResponse } from 'src/interfaces/response.interface'
 import type { EscrowDto } from '../solana-contract/escrow/Dto/escrow.dto'
 
 // Define the Borsh schema for the Milestone struct
@@ -82,24 +87,67 @@ export function serializeEscrow(escrow: EscrowDto): Buffer {
  * @param buffer - The buffer containing the serialized Escrow data.
  * @returns The deserialized Escrow object.
  */
-export function deserializeEscrow(buffer: Buffer): EscrowDto {
-	// Consider creating a specific return type
-	const decoded = escrowSchema.decode(buffer)
+export function deserializeEscrow(buffer: Buffer) {
+	const {
+		title,
+		description,
+		engagement_id,
+		receiver,
+		approver,
+		trustline,
+		release_signer,
+		service_provider,
+		dispute_resolver,
+		platform_address,
+		amount,
+		platform_fee,
+		receiver_memo,
+		trustline_decimals,
+		dispute_flag,
+		release_flag,
+		resolved_flag,
+		milestones,
+		swap_data,
+	} = ESCROW_ACCOUNT_STATE_SCHEMA.decode(buffer) as SmartContractEscrowStructure
 
-	// Convert PublicKeys and BNs back to strings or numbers as needed for DTO/interface compatibility
-	return {
-		...decoded,
-		approver: decoded.approver.toBase58(),
-		serviceProvider: decoded.serviceProvider.toBase58(),
-		platformAddress: decoded.platformAddress.toBase58(),
-		amount: decoded.amount,
-		platformFee: decoded.platformFee.toString(),
-		releaseSigner: decoded.releaseSigner.toBase58(),
-		disputeResolver: decoded.disputeResolver.toBase58(),
-		trustline: decoded.trustline.toBase58(),
-		receiver: decoded.receiver.toBase58(),
-		receiverMemo: decoded.receiverMemo,
+	const escrow: EscrowCamelCaseResponse = {
+		title,
+		description,
+		engagementId: engagement_id,
+		receiver: receiver.toBase58(),
+		approver: approver.toBase58(),
+		trustline: trustline.toBase58(),
+		releaseSigner: release_signer.toBase58(),
+		serviceProvider: service_provider.toBase58(),
+		disputeResolver: dispute_resolver.toBase58(),
+		platformAddress: platform_address.toBase58(),
+		amount: microUSDTToDecimal({
+			microToken: BigInt(amount.toString()),
+			decimals: trustline_decimals,
+		}),
+		platformFee: platform_fee,
+		receiverMemo: receiver_memo,
+		trustlineDecimals: trustline_decimals,
+		disputeFlag: Boolean(dispute_flag),
+		releaseFlag: Boolean(release_flag),
+		resolvedFlag: Boolean(resolved_flag),
+		milestones,
+		swapData: swap_data
+			? {
+					originalAmount: swap_data.original_amount.toString(),
+					originalCurrency: swap_data.original_currency,
+					tokenAmount: swap_data.token_amount.toString(),
+					tokenCurrency: swap_data.token_currency,
+					conversionTxHash: swap_data.conversion_tx_hash,
+					conversionRate: swap_data.conversion_rate.toString(),
+					conversionTimestamp: Number(
+						swap_data.conversion_timestamp.toString(),
+					),
+				}
+			: undefined,
 	}
+
+	return escrow
 }
 
 export function adjustPricesToMicroUSDC({

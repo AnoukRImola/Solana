@@ -1,94 +1,123 @@
-import { randomBytes } from 'crypto'
-import * as StellarSDK from 'stellar-sdk'
+import { HttpException, HttpStatus } from '@nestjs/common'
+import {
+	Commitment,
+	Connection,
+	ConnectionConfig,
+	Keypair,
+	PublicKey,
+	SystemProgram,
+	Transaction,
+	TransactionInstruction,
+	sendAndConfirmTransaction,
+} from '@solana/web3.js'
 
-export function buildTransaction(
-	account: StellarSDK.Account,
-	operations: StellarSDK.xdr.Operation[],
-	fee: string = StellarSDK.BASE_FEE,
-	networkPassphrase: string = StellarSDK.Networks.TESTNET,
-	timeout = 60,
-): StellarSDK.Transaction {
-	const transactionBuilder = new StellarSDK.TransactionBuilder(account, {
-		fee,
-		networkPassphrase,
-	}).setTimeout(timeout)
+export async function buildTransaction({
+	account,
+	operations,
+	connection,
+	options = 'confirmed',
+}: {
+	account: PublicKey
+	operations: TransactionInstruction[]
+	connection: Connection
+	options?: Commitment | ConnectionConfig
+}) {
+	const recentBlockhash = await connection.getLatestBlockhash(options)
 
-	for (const operation of operations) {
-		transactionBuilder.addOperation(operation)
+	if (!recentBlockhash) throw new Error('Failed to get recent blockhash')
+
+	const feePayer = account
+	const transaction = new Transaction({
+		recentBlockhash: recentBlockhash.blockhash,
+		feePayer, // The 'account' parameter is used as the feePayer for the Solana transaction.
+	})
+
+	for (const instruction of operations) {
+		transaction.add(instruction)
 	}
 
-	return transactionBuilder.build()
+	return transaction
 }
 
-export function buildInvokeContractOperation(
-	deployerContractAddress: string,
-	wasmHash: string,
-	operationFunc: string,
-	initFunc: string,
-	operations: any[],
-): StellarSDK.xdr.Operation {
-	const wasmHashBytes = StellarSDK.nativeToScVal(Buffer.from(wasmHash, 'hex'), {
-		type: 'bytes',
-	})
-	const salt = StellarSDK.nativeToScVal(Buffer.from(randomBytes(32)), {
-		type: 'bytes',
-	})
+export function buildInvokeContractInstruction({
+	programId,
+	escrowAccount,
+	payer,
+	data,
+	additionalAccounts = [],
+}: {
+	programId: PublicKey
+	escrowAccount: PublicKey
+	payer: PublicKey
+	data: Buffer
+	additionalAccounts?: Array<{
+		pubkey: PublicKey
+		isSigner: boolean
+		isWritable: boolean
+	}>
+}): TransactionInstruction {
+	// Create the account metadata array, starting with required accounts
+	const keys = [
+		{ pubkey: escrowAccount, isSigner: true, isWritable: true },
+		{ pubkey: payer, isSigner: true, isWritable: true },
+		{ pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+	]
 
-	const operation = StellarSDK.Operation.invokeHostFunction({
-		auth: [],
-		func: StellarSDK.xdr.HostFunction.hostFunctionTypeInvokeContract(
-			new StellarSDK.xdr.InvokeContractArgs({
-				contractAddress: new StellarSDK.Address(
-					deployerContractAddress,
-				).toScAddress(),
-				functionName: operationFunc,
-				args: [
-					StellarSDK.Address.fromString(deployerContractAddress).toScVal(),
-					wasmHashBytes,
-					salt,
-					StellarSDK.nativeToScVal(initFunc, { type: 'symbol' }),
-					StellarSDK.nativeToScVal(operations, { type: 'vec' }), // Aquí usas el array operations directamente
-				],
-			}),
-		),
-	})
-
-	return operation
-}
-
-export async function signAndSendTransaction(
-	transaction: StellarSDK.Transaction,
-	keypair: StellarSDK.Keypair,
-	server: StellarSDK.SorobanRpc.Server,
-	prepareTransaction: boolean,
-): Promise<StellarSDK.rpc.Api.GetSuccessfulTransactionResponse> {
-	let response: StellarSDK.rpc.Api.SendTransactionResponse
-
-	if (prepareTransaction) {
-		const preparedTransaction = await server.prepareTransaction(transaction)
-		preparedTransaction.sign(keypair)
-		response = await server.sendTransaction(preparedTransaction)
-	} else {
-		transaction.sign(keypair)
-		response = await server.sendTransaction(transaction)
+	// Add any additional accounts if provided
+	if (additionalAccounts?.length) {
+		keys.push(...additionalAccounts)
 	}
 
-	if (response.status === 'PENDING') {
-		let getResponse: StellarSDK.rpc.Api.GetTransactionResponse
+	// Create and return the transaction instruction
+	return new TransactionInstruction({
+		keys,
+		programId,
+		data,
+	})
+}
 
-		do {
-			await new Promise((resolve) => setTimeout(resolve, 1000))
-			getResponse = await server.getTransaction(response.hash)
-		} while (getResponse.status === 'NOT_FOUND')
+export async function signAndSendTransaction({
+	transaction,
+	signer,
+	connection,
+}: {
+	transaction: Transaction
+	signer: Keypair
+	connection: Connection
+}): Promise<{ signature: string; status: string }> {
+	try {
+		const signerKeypair = signer
+		const { blockhash } = await connection.getLatestBlockhash()
 
-		if (getResponse.status === 'SUCCESS') {
-			return getResponse
+		// Get latest blockhash
+		transaction.recentBlockhash = blockhash
+		transaction.sign(signerKeypair)
+
+		const signature = await sendAndConfirmTransaction(
+			connection,
+			transaction,
+			[signerKeypair],
+			{
+				commitment: 'confirmed', // We can use 'finalized' for stronger confirmation
+				preflightCommitment: 'confirmed',
+			},
+		)
+
+		if (!signature) {
+			throw new Error('Transaction signature is null or undefined')
 		}
 
-		throw new Error(
-			`Transaction failed: ${JSON.stringify(getResponse.resultXdr)}`,
+		return {
+			signature,
+			status: 'SUCCESS',
+		}
+	} catch (error) {
+		throw new HttpException(
+			{
+				status: HttpStatus.BAD_REQUEST,
+				message: `Transaction failed: ${error.message}`,
+			},
+			HttpStatus.BAD_REQUEST,
 		)
 	}
-
-	throw new Error(`Transaction submission failed: ${response.errorResult}`)
 }

@@ -1,12 +1,20 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common'
-import * as borsh from '@project-serum/borsh'
-import * as StellarSDK from '@stellar/stellar-sdk'
 import {
-	ApiResponse,
-	EscrowCamelCaseResponse,
-} from 'src/interfaces/response.interface'
+	createAssociatedTokenAccountInstruction,
+	getAssociatedTokenAddress,
+} from '@solana/spl-token'
+import {
+	Commitment,
+	Connection,
+	ConnectionConfig,
+	Keypair,
+	PublicKey,
+} from '@solana/web3.js'
+import * as StellarSDK from '@stellar/stellar-sdk'
+import { apiConfig } from 'src/config/api.config'
+import { ApiResponse } from 'src/interfaces/response.interface'
 import { mapErrorCodeToMessage } from 'src/utils/errors.utils'
-import { microUSDTToDecimal } from 'src/utils/parse.utils'
+import { deserializeEscrow, microUSDTToDecimal } from 'src/utils/parse.utils'
 import {
 	buildTransaction,
 	signAndSendTransaction,
@@ -16,155 +24,226 @@ import { PendingWriteQueueService } from '../queue/pending-write-queue.service'
 
 @Injectable()
 export class HelperService {
-	private horizonServer: StellarSDK.Horizon.Server
-	private sorobanServer: StellarSDK.SorobanRpc.Server
-	private sourceKeypair: StellarSDK.Keypair
-	private trustless_contract_id: string
-	private usdcTokenPublic: string
+	private sourceKeypair: Keypair
+
+	public trustlessContractId: string
+	public usdtTokenPublic: string
+	public usdcTokenPublic: string
+	public solanaServer: Connection
 
 	constructor(
 		private pendingWriteQueue: PendingWriteQueueService,
 		private pendingWriteHandler: PendingWriteHandlerService,
 	) {
-		this.horizonServer = new StellarSDK.Horizon.Server(
-			`${process.env.SERVER_URL}`,
-			{ allowHttp: true },
-		)
-		this.sorobanServer = new StellarSDK.SorobanRpc.Server(
-			`${process.env.SOROBAN_SERVER_URL}`,
-			{ allowHttp: true },
-		)
-		this.trustless_contract_id = process.env.TRUSTLESS_CONTRACT_ID || ''
+		this.trustlessContractId = apiConfig.trustlessContractId
 		this.usdcTokenPublic = process.env.USDC_STELLAR_CIRCLE_TEST_TOKEN || ''
+		this.usdtTokenPublic = process.env.USDC_STELLAR_CIRCLE_TEST_TOKEN || ''
+		this.solanaServer = this.getServerConnection()
+	}
+
+	getServerConnection(options?: Commitment | ConnectionConfig): Connection {
+		try {
+			const connection = new Connection(
+				apiConfig.solanaServerURL,
+				options || 'confirmed',
+			)
+
+			return connection
+		} catch (error) {
+			throw new HttpException(
+				{
+					status: HttpStatus.INTERNAL_SERVER_ERROR,
+					message: `<SOL Connection>${error.message}`,
+				},
+				HttpStatus.INTERNAL_SERVER_ERROR,
+			)
+		}
 	}
 
 	async sendTransaction(
-		signedXdr: string,
+		serializedSignedTransaction: string, // Base64 encoded string of the signed transaction
+		queueKey: string, // The key used to store/retrieve from pendingWriteQueue for this operation
 		returnEscrowDataIsRequired: boolean,
 		saveInfo = true,
 	): Promise<ApiResponse> {
+		let txSignature = ''
+
 		try {
-			// TODO: Create Solana transaction...
-			const transaction = {} as any
+			const transactionBuffer = Buffer.from(
+				serializedSignedTransaction,
+				'base64',
+			)
+			txSignature = await this.solanaServer.sendRawTransaction(
+				transactionBuffer,
+				{
+					skipPreflight: false, // Set to true if preflight is done client-side or causing issues
+				},
+			)
 
-			const txHash = transaction.hash().toString('hex')
+			const { blockhash, lastValidBlockHeight } =
+				await this.solanaServer.getLatestBlockhash()
+			const trnxConfirmed = await this.solanaServer.confirmTransaction(
+				{
+					signature: txSignature,
+					blockhash,
+					lastValidBlockHeight,
+				},
+				'confirmed',
+			)
 
-			const response = await this.horizonServer.submitTransaction(transaction)
-
-			if (!response.successful) {
+			if (trnxConfirmed.value.err)
+				throw new Error(
+					`Transaction failed: ${trnxConfirmed.value.err.toString()}`,
+				)
+			// Pass the original queueKey and the new txSignature
+			if (saveInfo) await this.handlePendingWrite(queueKey, txSignature)
+			if (!returnEscrowDataIsRequired) {
 				return {
-					status: StellarSDK.rpc.Api.GetTransactionStatus.FAILED,
-					message:
-						'The transaction could not be sent to the Stellar network for some unknown reason. Please try again.',
+					status: 'SUCCESS',
+					message: 'Transaction successfully sent to the Solana network.',
+					unsignedTransaction: txSignature,
 				}
 			}
 
-			if (saveInfo) {
-				await this.handlePendingWrite(txHash, response.hash)
+			let contractIdForFetching: string | undefined
+			// Attempt to get the contractId, which might be the queueKey itself (e.g., for new escrows)
+			// or part of the payload for existing escrows.
+			const pendingItem = this.pendingWriteQueue.get(queueKey)
+
+			if (pendingItem) {
+				// Get the potentially updated item
+				if (pendingItem.type === 'SAVE_ESCROW') {
+					// For SAVE_ESCROW, the contractId is typically the queueKey (escrow account pubkey)
+					// or it was added to the payload by handlePendingWrite.
+					contractIdForFetching =
+						(
+							pendingItem.payload.escrowProperties as Partial<
+								Record<string, string>
+							>
+						)?.contractId || queueKey
+				} else if (pendingItem.payload?.contractId) {
+					contractIdForFetching = pendingItem.payload.contractId as string
+				}
 			}
 
-			if (returnEscrowDataIsRequired) {
-				const data: any = await this.sorobanServer.getTransaction(response.hash)
-				// TODO: To Solana...
-				const transactionMeta = data.resultMetaXdr.v3().sorobanMeta()
-				const returnValue = transactionMeta.returnValue()
-				// TODO: check this decode return value...
-				const [, escrowData] = borsh.vec(returnValue).decode(returnValue)
-				const escrow: EscrowCamelCaseResponse = {
-					amount: microUSDTToDecimal({
-						microToken: Number(escrowData.amount),
-						decimals: Number(escrowData.trustlineDecimals),
-					}),
-					approver: escrowData.approver,
-					description: escrowData.description,
-					disputeFlag: escrowData.dispute_flag,
-					releaseFlag: escrowData.release_flag,
-					resolvedFlag: escrowData.resolved_flag,
-					disputeResolver: escrowData.dispute_resolver,
-					engagementId: escrowData.engagement_id,
-					milestones: escrowData.milestones,
-					platformAddress: escrowData.platform_address,
-					platformFee: Number(escrowData.platform_fee),
-					releaseSigner: escrowData.release_signer,
-					serviceProvider: escrowData.service_provider,
-					title: escrowData.title,
-					trustline: escrowData.trustline,
-					trustlineDecimals: Number(escrowData.trustlineDecimals),
-					receiver: escrowData.receiver,
-					receiverMemo: Number(escrowData.receiver_memo),
-				}
+			if (!contractIdForFetching) {
 				return {
-					status: StellarSDK.rpc.Api.GetTransactionStatus.SUCCESS,
+					status: 'SUCCESS_NO_CONTRACT_ID',
 					message:
-						'The transaction has been successfully sent to the Stellar network.',
-					contract_id: result[0],
-					escrow,
+						'Transaction successful, but contract ID for fetching escrow data was not determined.',
 				}
 			}
+
+			const escrowAccountPubkey = new PublicKey(contractIdForFetching)
+			const escrowAccountInfo =
+				await this.solanaServer.getAccountInfo(escrowAccountPubkey)
+
+			if (!escrowAccountInfo?.data) {
+				return {
+					status: 'SUCCESS_NO_DATA',
+					message:
+						'Transaction successful, but escrow data could not be retrieved from account.',
+					contract_id: contractIdForFetching,
+				}
+			}
+
+			// ? Should we use the transactionBuffer or the account data ? Ask Team. -Andler.
+			// const escrow = deserializeEscrow(transactionBuffer)
+			const escrow = deserializeEscrow(escrowAccountInfo.data)
 
 			return {
-				status: StellarSDK.rpc.Api.GetTransactionStatus.SUCCESS,
-				message:
-					'The transaction has been successfully sent to the Stellar network.',
+				status: 'SUCCESS',
+				message: 'Transaction successful and escrow data retrieved.',
+				contract_id: contractIdForFetching,
+				escrow,
 			}
 		} catch (error) {
-			if (error.message.includes('HostError: Error(Contract, #')) {
-				const errorCode = error.message.match(/Error\(Contract, #(\d+)\)/)?.[1]
-				const errorMessage = mapErrorCodeToMessage(errorCode)
-				throw new HttpException(
-					{ status: HttpStatus.BAD_REQUEST, message: errorMessage },
-					HttpStatus.BAD_REQUEST,
-				)
+			console.error('Solana sendTransaction error:', error)
+			// Basic error mapping, can be expanded
+			let errorMessage = 'Failed to send transaction to Solana network.'
+			if (error.logs) {
+				errorMessage += ` Logs: ${error.logs.join(', ')}`
+			} else if (error.message) {
+				errorMessage = error.message
 			}
 
-			throw error
+			throw new HttpException(
+				{
+					status: HttpStatus.BAD_REQUEST,
+					message: errorMessage,
+					tx_signature: txSignature || undefined,
+				},
+				HttpStatus.BAD_REQUEST,
+			)
 		}
 	}
 
 	async establishTrustline(sourceSecretKey: string): Promise<ApiResponse> {
 		try {
-			this.sourceKeypair = StellarSDK.Keypair.fromSecret(sourceSecretKey)
-			const account = await this.sorobanServer.getAccount(
-				this.sourceKeypair.publicKey(),
+			// Parse the user's keypair from the provided secret key
+			const secretKeyBuffer = Buffer.from(sourceSecretKey, 'base64')
+			this.sourceKeypair = Keypair.fromSecretKey(secretKeyBuffer)
+			const ownerPublicKey = this.sourceKeypair.publicKey
+
+			// Parse the USDC token mint address
+			// TODO: Is Trustline in USDC only? -Andler.
+			const tokenMintAddress = new PublicKey(this.usdcTokenPublic)
+
+			// Get the associated token account address
+			const associatedTokenAddress = await getAssociatedTokenAddress(
+				tokenMintAddress, // mint
+				ownerPublicKey, // owner
 			)
 
-			const usdcAsset = new StellarSDK.Asset('USDC', this.usdcTokenPublic)
-
-			const operations = [
-				StellarSDK.Operation.changeTrust({ asset: usdcAsset }),
-			]
-			const transaction = buildTransaction(account, operations)
-
-			const result = await signAndSendTransaction(
-				transaction,
-				this.sourceKeypair,
-				this.sorobanServer,
-				false,
+			// Check if the associated token account already exists
+			const tokenAccount = await this.solanaServer.getAccountInfo(
+				associatedTokenAddress,
 			)
 
-			if (result.status !== 'SUCCESS') {
+			if (tokenAccount !== null) {
 				return {
-					status: result.status,
-					message:
-						'An unexpected error occurred while trying to define the trustline in the USDC token. Please try again',
+					status: 'SUCCESS',
+					message: 'The USDC token account already exists for this wallet',
 				}
 			}
 
+			const transaction = await buildTransaction({
+				account: ownerPublicKey, // payer
+				connection: this.solanaServer,
+				operations: [
+					createAssociatedTokenAccountInstruction(
+						ownerPublicKey, // payer
+						associatedTokenAddress, // associated token account
+						ownerPublicKey, // owner
+						tokenMintAddress, // mint
+					),
+				],
+			})
+			const signatureResults = await signAndSendTransaction({
+				transaction,
+				signer: this.sourceKeypair,
+				connection: this.solanaServer,
+			})
+
 			return {
-				status: result.status,
-				message: 'The trust line has been correctly defined in the USDC token',
+				status: 'SUCCESS',
+				message: 'The USDC token account has been successfully created',
+				unsignedTransaction: signatureResults.signature,
 			}
 		} catch (error) {
-			if (error.message.includes('HostError: Error(Contract, #')) {
-				const errorCode = error.message.match(/Error\(Contract, #(\d+)\)/)?.[1]
-				const errorMessage = mapErrorCodeToMessage(errorCode)
-				throw new HttpException(
-					{ status: HttpStatus.BAD_REQUEST, message: errorMessage },
-					HttpStatus.BAD_REQUEST,
-				)
+			console.error('Error establishing Solana token account:', error)
+
+			let errorMessage = 'Failed to establish token account in Solana'
+			if (error.logs) {
+				errorMessage += ` Logs: ${error.logs.join(', ')}`
+			} else if (error.message) {
+				errorMessage = error.message
 			}
 
-			throw error
+			throw new HttpException(
+				{ status: HttpStatus.BAD_REQUEST, message: errorMessage },
+				HttpStatus.BAD_REQUEST,
+			)
 		}
 	}
 
@@ -173,8 +252,9 @@ export class HelperService {
 		addresses: string[],
 	): Promise<{ address: string; balance: number }[]> {
 		try {
-			const contract = new StellarSDK.Contract(this.trustless_contract_id)
-			const account = await this.horizonServer.loadAccount(signer)
+			const programId = new PublicKey(this.trustlessContractId)
+			const accountPublicKey = new PublicKey(signer)
+			const account = await this.solanaServer.getAccountInfo(accountPublicKey)
 
 			const addressScVals = addresses.map((addr) =>
 				new StellarSDK.Address(addr).toScVal(),
@@ -184,7 +264,7 @@ export class HelperService {
 			const operations = [
 				contract.call('get_multiple_escrow_balances', vectorScVal),
 			]
-			const transaction = buildTransaction(account, operations)
+			const transaction = buildTransaction({ account, operations })
 			const preparedTransaction =
 				await this.sorobanServer.prepareTransaction(transaction)
 			const result: any =
@@ -199,10 +279,10 @@ export class HelperService {
 
 			return balances.map((item) => ({
 				address: item.address,
-				balance: microUSDToDecimal(
-					item.balance,
-					Number(item.trustlineDecimals),
-				),
+				balance: microUSDTToDecimal({
+					microToken: item.balance,
+					decimals: Number(item.trustlineDecimals),
+				}),
 			}))
 		} catch (error) {
 			if (error.message.includes('HostError: Error(Contract, #')) {

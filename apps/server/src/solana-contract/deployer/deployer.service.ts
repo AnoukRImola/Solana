@@ -6,10 +6,12 @@ import {
 	PublicKey,
 	SystemProgram,
 	Transaction,
-	TransactionInstruction,
 } from '@solana/web3.js'
+import { apiConfig } from 'src/config/api.config'
 import { ApiResponse } from 'src/interfaces/response.interface'
+import { HelperService } from 'src/solana-contract/helper/helper.service'
 import { serializeEscrow } from 'src/utils/parse.utils'
+import { buildInvokeContractInstruction } from 'src/utils/transaction.utils'
 import { PendingWriteQueueService } from '../queue/pending-write-queue.service'
 import { InvokeDeployerContractDto } from './Dto/deployer.dto'
 
@@ -19,15 +21,13 @@ import { InvokeDeployerContractDto } from './Dto/deployer.dto'
 
 @Injectable()
 export class DeployerService {
-	private connection: Connection
-	private payer: Keypair
-	// TODO: rendre configurable via .env
-	private readonly solanaUrl = 'https://api.devnet.solana.com'
+	private solanaServer: Connection
 
-	constructor(private pendingWriteQueue: PendingWriteQueueService) {
-		this.connection = new Connection(this.solanaUrl, 'confirmed')
-		// Pour l'instant, génère un Keypair aléatoire (à remplacer par un keypair réel/configurable)
-		this.payer = Keypair.generate()
+	constructor(
+		private pendingWriteQueue: PendingWriteQueueService,
+		private helperService: HelperService,
+	) {
+		this.solanaServer = this.helperService.solanaServer
 	}
 
 	async invokeDeployerContract(
@@ -44,24 +44,22 @@ export class DeployerService {
 				milestone.description = escrowProperties.description
 			}
 
+			const programId = new PublicKey(apiConfig.solanaProgramId)
+			const payer = new PublicKey(escrowProperties.signer)
 			const escrowData = serializeEscrow(escrowProperties)
 			// ? What programId to use ? Ask team. -Andler.
-			const programId = new PublicKey(escrowProperties.approver)
-			const instruction = new TransactionInstruction({
-				keys: [
-					{ pubkey: escrowAccount.publicKey, isSigner: true, isWritable: true },
-					{ pubkey: this.payer.publicKey, isSigner: true, isWritable: false },
-				],
+			const instruction = buildInvokeContractInstruction({
+				escrowAccount: escrowAccount.publicKey,
+				data: escrowData,
 				programId,
-				data: escrowData, // Données Borsh
+				payer,
 			})
-
 			const transaction = new Transaction().add(
 				SystemProgram.createAccount({
-					fromPubkey: this.payer.publicKey,
+					fromPubkey: payer,
 					newAccountPubkey: escrowAccount.publicKey,
 					lamports:
-						await this.connection.getMinimumBalanceForRentExemption(200),
+						await this.solanaServer.getMinimumBalanceForRentExemption(200),
 					space: 200,
 					programId,
 				}),

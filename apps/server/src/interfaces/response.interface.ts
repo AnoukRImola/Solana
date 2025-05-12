@@ -1,9 +1,8 @@
-import type * as StellarSDK from '@stellar/stellar-sdk'
 import { Escrow } from 'src/interfaces/escrow.interface'
 import type { Milestone } from './milestone.interface'
 
 export interface ApiResponse {
-	status: StellarSDK.rpc.Api.GetTransactionStatus
+	status: string
 	unsignedTransaction?: string
 	unsignedConversionTransaction?: string
 	message?: string
