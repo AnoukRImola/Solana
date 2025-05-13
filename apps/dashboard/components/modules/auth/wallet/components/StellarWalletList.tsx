@@ -15,15 +15,15 @@ export const StellarWalletList: React.FC<StellarWalletListProps> = ({ onClose })
   }
 
   return (
-    <div className="flex flex-col gap-4 p-4">
+    <div className="flex flex-col gap-4 p-6">
       <button
         type="button"
         onClick={handleConnect}
-        className="flex items-center gap-2 rounded-lg border p-4 hover:bg-accent"
+        className="flex w-full items-center gap-4 rounded-lg border p-4 transition-colors hover:bg-accent"
       >
-        <img src="/stellar-logo.svg" alt="Stellar" className="h-8 w-8" />
+        <img src="/stellar-logo.svg" alt="Stellar" className="h-10 w-10" />
         <div className="flex flex-col items-start">
-          <span className="font-medium">Connect Stellar Wallet</span>
+          <span className="text-lg font-semibold">Connect Stellar Wallet</span>
           <span className="text-sm text-muted-foreground">
             Connect using your Stellar wallet
           </span>

@@ -16,19 +16,29 @@ export const WalletSelectionModal: React.FC<WalletSelectionModalProps> = ({
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Connect Wallet</DialogTitle>
+      <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden">
+        <DialogHeader className="px-6 pt-6 pb-2">
+          <DialogTitle className="text-2xl font-semibold">Connect Wallet</DialogTitle>
         </DialogHeader>
         <Tabs defaultValue="stellar" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="stellar">Stellar</TabsTrigger>
-            <TabsTrigger value="solana">Solana</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 rounded-none border-b bg-transparent p-0">
+            <TabsTrigger 
+              value="stellar" 
+              className="rounded-full border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+            >
+              Stellar
+            </TabsTrigger>
+            <TabsTrigger 
+              value="solana"
+              className="rounded-full border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+            >
+              Solana
+            </TabsTrigger>
           </TabsList>
-          <TabsContent value="stellar">
+          <TabsContent value="stellar" className="m-0">
             <StellarWalletList onClose={onClose} />
           </TabsContent>
-          <TabsContent value="solana">
+          <TabsContent value="solana" className="m-0">
             <SolanaWalletList onClose={onClose} />
           </TabsContent>
         </Tabs>
