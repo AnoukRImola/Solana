@@ -4,6 +4,7 @@ import './global.css'
 import { Analytics } from '@vercel/analytics/react'
 import { Toaster } from '~/components/ui/sonner'
 import MoonpayClientProvider from '~/providers/MoonpayClientProvider'
+import { SolanaProvider } from '~/components/modules/auth/wallet/providers/SolanaProvider'
 
 export const metadata: Metadata = {
 	title: 'Trustless Work',
@@ -20,11 +21,13 @@ export default function RootLayout({
 			<body className={`${GeistSans.className} bg-background text-foreground`}>
 				<Analytics />
 				<MoonpayClientProvider>
-					<div className="relative flex min-h-screen w-full">
-						<div className="flex-1 flex flex-col w-full">
-							<div className="flex-1 w-full p-4">{children}</div>
-						</div>
-					</div>
+					<SolanaProvider>
+						<main className="relative flex min-h-screen w-full">
+							<div className="flex-1 flex flex-col w-full">
+								<div className="flex-1 w-full p-4">{children}</div>
+							</div>
+						</main>
+					</SolanaProvider>
 				</MoonpayClientProvider>
 				<Toaster />
 			</body>

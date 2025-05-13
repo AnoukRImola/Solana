@@ -1,10 +1,23 @@
 import type { ISupportedWallet } from '@creit.tech/stellar-wallets-kit'
 import { useGlobalAuthenticationStore } from '~/core/store/data'
 import { kit } from '../constants/wallet-kit.constant'
+import { useWallet as useSolanaWallet } from '@solana/wallet-adapter-react'
+import { useEffect } from 'react'
 
 export const useWallet = () => {
-	const { connectWalletStore, disconnectWalletStore } =
+	const { connectWalletStore, disconnectWalletStore, walletType, address } =
 		useGlobalAuthenticationStore()
+	const { disconnect: disconnectSolana, connected: solanaConnected, publicKey } = useSolanaWallet()
+
+	// Handle Solana wallet reconnection
+	useEffect(() => {
+		if (walletType === 'solana' && solanaConnected && publicKey) {
+			const walletAddress = publicKey.toString()
+			if (walletAddress !== address) {
+				connectWalletStore(walletAddress, 'Solana Wallet', 'solana')
+			}
+		}
+	}, [solanaConnected, publicKey, walletType, address, connectWalletStore])
 
 	const connectWallet = async () => {
 		await kit.openModal({
@@ -15,13 +28,17 @@ export const useWallet = () => {
 				const { address } = await kit.getAddress()
 				const { name } = option
 
-				connectWalletStore(address, name)
+				connectWalletStore(address, name, 'stellar')
 			},
 		})
 	}
 
 	const disconnectWallet = async () => {
-		await kit.disconnect()
+		if (walletType === 'solana') {
+			await disconnectSolana()
+		} else {
+			await kit.disconnect()
+		}
 		disconnectWalletStore()
 	}
 

@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { type DevtoolsOptions, devtools, persist } from 'zustand/middleware'
+import { type DevtoolsOptions, devtools, persist, createJSONStorage } from 'zustand/middleware'
 import type { AuthenticationGlobalStore } from './@types/authentication.entity'
 import type { EscrowGlobalStore } from './@types/escrows.entity'
 import type { TrustlineGlobalStore } from './@types/trustlines.entity'
@@ -55,6 +55,13 @@ export const useGlobalAuthenticationStore = create<AuthState>()(
 		}),
 		{
 			name: 'address-wallet',
+			storage: createJSONStorage(() => localStorage),
+			partialize: (state) => ({
+				address: state.address,
+				name: state.name,
+				walletType: state.walletType,
+				loggedUser: state.loggedUser,
+			}),
 		},
 	),
 )
