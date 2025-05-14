@@ -1,6 +1,7 @@
 #!/bin/bash
 # grabbing first argument -y or -n value
 arg1=$1
+program_dir=$(realpath "../../programs/solana-tl")
 # Check if the argument is -y or -n
 if [[ $arg1 == "-y" || $arg1 == "-n" ]]; then
   echo ""
@@ -13,7 +14,7 @@ echo "🔵 Building smart contract..."
 if (anchor build); then
   # Move the smart contract to the sol-program directory.
   # ? Maybe this should be a symlink instead? Or another folder?
-  mv target/ ../../packages/sol-program/target
+  mv target/ $program_dir/target
   echo "🟢 Build successful!"
   read -p "🟡 Do you want to deploy the smart contract? (y/N) " -n 1 -r
   if [[ $arg1 == "-y" ]]; then
@@ -26,7 +27,7 @@ if (anchor build); then
   if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo "🔵 Deploying smart contract..."
     # Maybe to another folder? programs folder perhaps?
-    if (solana deploy ../../packages/sol-program/target/deploy/smart-contract.so); then
+    if (solana deploy $program_dir/target/deploy/smart-contract.so); then
       echo "🟢 Deployment successful!"
     else
       echo "🔴 Deployment failed!"

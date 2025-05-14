@@ -1,3 +1,4 @@
+./.husky/scripts/build-solana-program.sh
 prettier $(git diff --cached --name-only --diff-filter=ACMR | sed 's| |\\ |g') --write --ignore-unknown
 bun format-and-lint:fix
 git update-index --again

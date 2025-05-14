@@ -21,7 +21,7 @@ FULL_SC_DIR="$REPO_ROOT/$SMART_CONTRACT_DIR"
 
 # Check if the directory exists
 if [ ! -d "$FULL_SC_DIR" ]; then
-  echo "Error: Smart contract directory not found at $FULL_SC_DIR"
+  echo "🔴 Error: Smart contract directory not found at $FULL_SC_DIR"
   exit 1
 fi
 
@@ -31,21 +31,21 @@ if git rev-parse HEAD^ &>/dev/null; then
   CHANGED_FILES=$(git diff --name-only HEAD^ HEAD -- "$SMART_CONTRACT_DIR")
   
   if [ -z "$CHANGED_FILES" ]; then
-    echo "No changes detected in the smart-contract directory. Skipping build."
+    echo "🟡 No changes detected in the smart-contract directory. Skipping build."
     exit 0
   fi
   
-  echo "Changes detected in smart-contract directory:"
+  echo "🟡 Changes detected in smart-contract directory:"
   echo "$CHANGED_FILES"
 fi
 
 # Navigate to the smart contract directory
 cd "$FULL_SC_DIR" || {
-  echo "Error: Cannot navigate to smart-contract directory at $FULL_SC_DIR"
+  echo "🔴 Error: Cannot navigate to smart-contract directory at $FULL_SC_DIR"
   exit 1
 }
 
-echo "Building Solana program in: $(pwd)"
+echo "🟡 Building Solana program in: $(pwd)"
 
 # Check if we're on a merge to main from develop
 IS_DEPLOY=false
@@ -69,27 +69,27 @@ else
 fi
 
 # Run the build script
-echo "Running build script..."
+echo "🟡 Running build script..."
 
 if [ -x "./build.sh" ]; then
   # Pass --deploy flag if this is a merge to main from develop
   if [ "$IS_DEPLOY" = true ]; then
-    echo "Merge from develop to main detected. Building with deploy option."
-    ./build.sh --deploy
+    echo "🟢 Merge from develop to main detected. Building with deploy option."
+    ./build.sh -y
   else
-    echo "Building without deployment."
-    ./build.sh
+    echo "🟢 Building without deployment."
+    ./build.sh -n
   fi
   
   BUILD_EXIT_CODE=$?
   
   if [ $BUILD_EXIT_CODE -ne 0 ]; then
-    echo "Build failed with exit code $BUILD_EXIT_CODE"
+    echo "🔴 Build failed with exit code $BUILD_EXIT_CODE"
     exit $BUILD_EXIT_CODE
   else
-    echo "Build completed successfully"
+    echo "🟢 Build completed successfully"
   fi
 else
-  echo "Error: build.sh script not found or not executable"
+  echo "🔴 Error: build.sh script not found or not executable"
   exit 1
 fi
