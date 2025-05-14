@@ -1,7 +1,8 @@
 {
-	"name": "tl-work-sol",
+	"name": "sol-trustless-work-monorepo",
+	"version": "0.1.0",
 	"private": true,
-	"workspaces": ["apps/*", "packages/*"],
+	"workspaces": ["apps/*", "packages/*", "programs/*"],
 	"scripts": {
 		"init": "bun install && bun prepare",
 		"format-and-lint": "biome check .",
