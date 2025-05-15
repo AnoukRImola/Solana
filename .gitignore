@@ -43,5 +43,11 @@ __dev
 
 bun.lockb
 
-# smart-contract
-apps/smart-contract/target
+# smart-contract / build artifacts
+# Only accepting types and idl folders for solana programs
+**/target/debug
+**/target/release
+**/target/deploy
+**/target/sbf-solana-solana
+**/target/.rustc_info.json
+**/target/CACHEDIR.TAG
