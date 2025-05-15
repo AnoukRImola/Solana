@@ -7,4 +7,4 @@ import { HelperModule } from './helper/helper.module'
 @Module({
 	imports: [EscrowModule /*, UserModule*/, HelperModule, DeployerModule],
 })
-export class StellarContractModule {}
+export class SolanaContractModule { }

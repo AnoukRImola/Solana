@@ -17,7 +17,7 @@ async function bootstrap() {
 			exceptionFactory: (errors: ValidationError[]) => {
 				const formattedErrors = errors.reduce(
 					(acc, err) => {
-						acc[err.property] = Object.values(err.constraints)
+						acc[err.property] = Object.values(err.constraints ?? {})
 						return acc
 					},
 					{} as Record<string, string[]>,
@@ -73,6 +73,6 @@ async function bootstrap() {
 
 	await app.listen(process.env.PORT || 3000)
 
-	console.log('Now running in: ' + process.env.PORT || 3000)
+	console.log(`Now running in: ${process.env.PORT}` || 3000)
 }
 bootstrap()

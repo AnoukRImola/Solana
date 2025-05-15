@@ -4,11 +4,11 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler'
 import { AuthModule } from './auth/auth.module'
 import { FirebaseModule } from './firebase/firebase.module'
 import { NotificationsModule } from './notifications/notifications.module'
-import { StellarContractModule } from './solana-contract/solana-contract.module'
+import { SolanaContractModule } from './solana-contract/solana-contract.module'
 
 @Module({
 	imports: [
-		StellarContractModule,
+		SolanaContractModule,
 		ThrottlerModule.forRoot([
 			{
 				ttl: 60000,
@@ -27,4 +27,4 @@ import { StellarContractModule } from './solana-contract/solana-contract.module'
 		},
 	],
 })
-export class AppModule {}
+export class AppModule { }
