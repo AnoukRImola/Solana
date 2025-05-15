@@ -1,12 +1,12 @@
 import type { StateCreator } from 'zustand'
 import type { UserPayload } from '~/@types/user.entity'
-import type { WalletType } from '../@types/authentication.entity'
 import {
 	addUser,
 	getAllUsers,
 	getUser,
 	updateUser,
 } from '~/components/modules/auth/server/authentication.firebase'
+import type { WalletType } from '../@types/authentication.entity'
 import type { AuthenticationGlobalStore } from '../@types/authentication.entity'
 
 const AUTHENTICATION_ACTIONS = {
@@ -32,7 +32,11 @@ export const useGlobalAuthenticationSlice: StateCreator<
 		users: [],
 
 		// Modifiers
-		connectWalletStore: async (address: string, name: string, walletType: WalletType) => {
+		connectWalletStore: async (
+			address: string,
+			name: string,
+			walletType: WalletType,
+		) => {
 			const { success, data } = await getUser({ address })
 
 			if (!success) {

@@ -2,9 +2,9 @@ import { GeistSans } from 'geist/font/sans'
 import type { Metadata } from 'next'
 import './global.css'
 import { Analytics } from '@vercel/analytics/react'
+import { SolanaProvider } from '~/components/modules/auth/wallet/providers/SolanaProvider'
 import { Toaster } from '~/components/ui/sonner'
 import MoonpayClientProvider from '~/providers/MoonpayClientProvider'
-import { SolanaProvider } from '~/components/modules/auth/wallet/providers/SolanaProvider'
 
 export const metadata: Metadata = {
 	title: 'Trustless Work',

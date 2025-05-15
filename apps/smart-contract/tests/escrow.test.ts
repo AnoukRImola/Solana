@@ -1,13 +1,22 @@
 import type { Program } from '@coral-xyz/anchor'
 import * as anchor from '@coral-xyz/anchor'
+import type { Escrow } from '@programs/solana-tl'
 import { Keypair } from '@solana/web3.js'
 import { assert } from 'chai'
-import type { Escrow } from '../target/types/escrow'
 
 describe('test_initialize_escrow', () => {
-	const provider = anchor.AnchorProvider.env()
+	const provider = new anchor.AnchorProvider(
+		anchor.getProvider().connection,
+		new anchor.Wallet(
+			Keypair.generate(), // Dummy wallet, replace with a real one if needed
+		),
+		anchor.AnchorProvider.defaultOptions(),
+	)
+	// Default target location: `./target/idl/escrow.json...
+	// IDL not found on dfefault loc nor cannot be updated to the custom...
+	// Even default fails.
 	anchor.setProvider(provider)
-	const program = anchor.workspace.Escrow as Program<Escrow>
+	const program = anchor.workspace.Escrow as Program<anchor.Idl & Escrow>
 
 	it('should initialize an escrow successfully', async () => {
 		// Generate dummy keypairs

@@ -1,0 +1,25 @@
+{
+	"name": "tl-solana-smart-contract",
+	"version": "0.1.0",
+	"private": true,
+	"description": "Solana smart contract for escrow functionality",
+	"type": "module",
+	"scripts": {
+		"test": "bun test tests/",
+		"build": "./build.sh",
+		"getId": "./get-id.sh"
+	},
+	"dependencies": {
+		"@coral-xyz/anchor": "^0.29.0",
+		"@solana/web3.js": "^1.87.6",
+		"@programs/solana-tl": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/chai": "^4.3.10",
+		"@types/node": "^20.9.0",
+		"bun-types": "latest",
+		"chai": "^4.3.10",
+		"eslint": "^8.53.0",
+		"typescript": "^5.2.2"
+	}
+}

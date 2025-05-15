@@ -1,5 +1,10 @@
 import { create } from 'zustand'
-import { type DevtoolsOptions, devtools, persist, createJSONStorage } from 'zustand/middleware'
+import {
+	type DevtoolsOptions,
+	createJSONStorage,
+	devtools,
+	persist,
+} from 'zustand/middleware'
 import type { AuthenticationGlobalStore } from './@types/authentication.entity'
 import type { EscrowGlobalStore } from './@types/escrows.entity'
 import type { TrustlineGlobalStore } from './@types/trustlines.entity'
