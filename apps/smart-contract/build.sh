@@ -14,7 +14,8 @@ echo "🔵 Building smart contract..."
 if (anchor build); then
   # Move the smart contract to the sol-program directory.
   # ? Maybe this should be a symlink instead? Or another folder?
-  mv target/ $program_dir/target
+  rm -rf $program_dir/target/
+  mv target/ $program_dir/target/
   echo "🟢 Build successful!"
   read -p "🟡 Do you want to deploy the smart contract? (y/N) " -n 1 -r
   if [[ $arg1 == "-y" ]]; then

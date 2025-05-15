@@ -9,7 +9,11 @@ export interface AuthenticationGlobalStore {
 	loggedUser: User | null
 	users: User[]
 
-	connectWalletStore: (address: string, name: string, walletType: WalletType) => void
+	connectWalletStore: (
+		address: string,
+		name: string,
+		walletType: WalletType,
+	) => void
 	disconnectWalletStore: () => void
 	updateUser: (address: string, payload: UserPayload) => void
 	getAllUsers: () => void

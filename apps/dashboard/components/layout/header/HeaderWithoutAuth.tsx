@@ -4,12 +4,9 @@ import { Bug, Copy, LogIn, LogOut, User } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useState } from 'react'
+import { WalletSelectionModal } from '~/components/modules/auth/wallet/components/WalletSelectionModal'
 import { useWallet } from '~/components/modules/auth/wallet/hooks/wallet.hook'
 import { Button } from '~/components/ui/button'
-import { WalletSelectionModal } from '~/components/modules/auth/wallet/components/WalletSelectionModal'
-import ThemeToggle from './ThemeToggle'
-import useHeaderWithoutAuth from './hooks/header-without-auth.hook'
-import { useGlobalAuthenticationStore } from '~/core/store/data'
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -18,7 +15,10 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu'
+import { useGlobalAuthenticationStore } from '~/core/store/data'
 import { useCopyUtils } from '~/utils/hook/copy.hook'
+import ThemeToggle from './ThemeToggle'
+import useHeaderWithoutAuth from './hooks/header-without-auth.hook'
 
 const HeaderWithoutAuth: React.FC = () => {
 	const { handleDisconnect } = useWallet()
@@ -57,7 +57,8 @@ const HeaderWithoutAuth: React.FC = () => {
 							</DropdownMenuItem>
 							<DropdownMenuItem onClick={handleDisconnect}>
 								<LogOut className="mr-2 h-4 w-4" />
-								Disconnect {walletType === 'solana' ? 'Solana' : 'Stellar'} Wallet
+								Disconnect {walletType === 'solana' ? 'Solana' : 'Stellar'}{' '}
+								Wallet
 							</DropdownMenuItem>
 						</DropdownMenuContent>
 					</DropdownMenu>
