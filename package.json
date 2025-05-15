@@ -5,6 +5,7 @@
 	"workspaces": ["apps/*", "packages/*", "programs/*"],
 	"scripts": {
 		"init": "bun install && bun prepare",
+		"link-program": "cd apps/smart-contract && ln -sf ../../programs/solana-tl/target ./target",
 		"format-and-lint": "biome check .",
 		"format-and-lint:fix": "biome check . --write",
 		"clean": "git clean -xdf node_modules",

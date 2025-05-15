@@ -31,7 +31,7 @@ const ESCROW_USDC_ADDRESSES = {
 	[ChainSymbol.STLR]: 'GDW2...', // Replace with actual USDC address
 }
 
-export class AllbridgeService {
+class AllbridgeService {
 	private readonly sdk: AllbridgeCoreSdk
 	private readonly solanaConnection: Connection
 	private readonly solanaConfig: SolanaConfig
@@ -114,11 +114,7 @@ export class AllbridgeService {
 		fromToken: string
 		amount: string
 		userAddress: string
-		walletType:
-			| ChainSymbol.SOL
-			| ChainSymbol.TRX
-			| ChainSymbol.SRB
-			| ChainSymbol.STLR
+		walletType: 'evm' | 'solana' | 'stellar' | 'tron'
 	}): Promise<{
 		txHash: string
 	}> {
@@ -219,7 +215,7 @@ export class AllbridgeService {
 		// 3. Prepare and send swap transaction
 		const sendParams: SendParams = {
 			amount,
-			fromAccountAddress: ESCROW_USDC_ADDRESS, // Escrow system will receive USDC
+			fromAccountAddress: ESCROW_USDC_ADDRESSES[ChainSymbol.SOL], // Escrow system will receive USDC
 			toAccountAddress: userAddress,
 			sourceToken,
 			destinationToken,
@@ -242,3 +238,5 @@ export class AllbridgeService {
 		}
 	}
 }
+
+export { AllbridgeService, ESCROW_USDC_ADDRESSES, SDK_NODE_URLS }
