@@ -4,65 +4,19 @@ dotenv: [".env"]
 silent: true
 
 tasks:
-  # Run the main app with Turbo repo
-  app:
+  # Run the main (dashboard) app in DEV mode
+  dashboard:
     cmds:
-      - cd apps/masterbots.ai && bun run dev
-
-  # [After Migrating] Run the hasura backend console (highly recommended for changes)
-  console:
+      - cd apps/dashboard && bun run dev
+  # Run the server app in DEV mode
+  server:
     cmds:
-      - hasura console --project apps/hasura --admin-secret ${HASURA_GRAPHQL_ADMIN_SECRET}
-
-  # [First Step When First Boot] Run the hasura backend (docker desktop must be started first)
-  boot:
+      - cd apps/server && bun run start:dev
+  # Deploy the server app in PROD mode with Mau
+  deploy-server:
     cmds:
-      - docker compose up -d --build database
-      - sleep 10
-      - docker compose up -d --build hasura
-      - echo "Waiting 30s for postgres and hasura to start ..."
-      - sleep 30
-      - task migrate
-
-  # Reboot the hasura backend
-  reboot:
+      - cd apps/server && mau deploy
+  # Deploy the contract program to the blockchain and update code integrity
+  deploy-contract:
     cmds:
-      - task down
-      - task boot
-
-  # [AFTER applying metadata & migrations] Apply the hasura seeds
-  seed:
-    cmds:
-      - hasura seeds apply --project apps/hasura --admin-secret ${HASURA_GRAPHQL_ADMIN_SECRET}
-
-  # Turns on the hasura backend (docker desktop must be started first)
-  up:
-    cmds:
-      - docker compose up -d --build
-
-  # Turns off the hasura backend
-  down:
-    cmds:
-      - docker compose down -v --remove-orphans
-
-  # Stop the hasura backend
-  stop:
-    cmds:
-      - docker compose stop
-
-  # Apply the hasura migrations
-  migrate:
-    cmds:
-      - hasura migrate apply --project apps/hasura --admin-secret ${HASURA_GRAPHQL_ADMIN_SECRET}
-      - hasura metadata apply --project apps/hasura --admin-secret ${HASURA_GRAPHQL_ADMIN_SECRET}
-
-  # Reset the hasura backend by going from down, to up, to migrate, to seed
-  reload:
-    cmds:
-      - task down
-      - docker compose up -d postgres
-      - sleep 5
-      - docker compose up -d --build
-      - docker compose logs -f hasura
-      - task migrate
-      - task seed
+      - cd apps/smart-contract && ./build.sh
