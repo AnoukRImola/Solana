@@ -1,8 +1,10 @@
 import axios from 'axios'
 import type { EscrowPayload } from '~/@types/escrow.entity'
 import http from '~/core/config/axios/http'
-
-// TODO: PR7 — Sign with Solana wallet adapter instead of Stellar kit
+import {
+	signAndSerialize,
+	type WalletSignTransaction,
+} from '~/lib/solana-wallet'
 
 interface EscrowPayloadWithSigner extends EscrowPayload {
 	signer?: string
@@ -12,6 +14,7 @@ interface EscrowPayloadWithSigner extends EscrowPayload {
 export const initializeEscrow = async (
 	payload: EscrowPayloadWithSigner,
 	address: string,
+	signTransaction: WalletSignTransaction,
 ) => {
 	try {
 		const payloadWithSigner: EscrowPayloadWithSigner = {
@@ -20,17 +23,20 @@ export const initializeEscrow = async (
 		}
 
 		const response = await http.post(
-			'/deployer/invoke-deployer-contract',
+			'/deployer/single-release',
 			payloadWithSigner,
 		)
 
-		const { unsignedTransaction } = response.data
+		const { unsignedTransaction, contract_id } = response.data
 
-		// TODO: PR7 — Replace with Solana wallet signTransaction
-		const signedTx = unsignedTransaction
+		const signedTx = await signAndSerialize(
+			unsignedTransaction,
+			signTransaction,
+		)
 
 		const tx = await http.post('/helper/send-transaction', {
 			signedXdr: signedTx,
+			queueKey: contract_id,
 			returnEscrowDataIsRequired: true,
 		})
 
