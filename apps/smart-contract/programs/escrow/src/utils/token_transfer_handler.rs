@@ -9,6 +9,8 @@ pub fn has_sufficient_balance(account: &TokenAccount, amount: u64) -> Result<()>
     Ok(())
 }
 
+/// Transfer tokens FROM the escrow token account using PDA authority (signed CPI).
+/// Used for release_funds and resolve_dispute.
 pub fn transfer_from_escrow<'info>(
     amount: u64,
     from: AccountInfo<'info>,
@@ -26,6 +28,28 @@ pub fn transfer_from_escrow<'info>(
                 authority,
             },
             &[authority_seeds],
+        ),
+        amount,
+    )
+}
+
+/// Transfer tokens TO the escrow token account using the user's signer authority.
+/// Used for fund_escrow where the user signs the transfer directly.
+pub fn transfer_to_escrow<'info>(
+    amount: u64,
+    from: AccountInfo<'info>,
+    to: AccountInfo<'info>,
+    authority: AccountInfo<'info>,
+    token_program: AccountInfo<'info>,
+) -> Result<()> {
+    transfer(
+        CpiContext::new(
+            token_program,
+            Transfer {
+                from,
+                to,
+                authority,
+            },
         ),
         amount,
     )

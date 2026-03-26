@@ -37,17 +37,16 @@ pub mod escrow {
         ctx: Context<ResolveDispute>,
         approver_funds: i128,
         provider_funds: i128,
-        escrow_bump: u8,
     ) -> Result<()> {
-        instructions::dispute::resolve_dispute_handler(ctx, approver_funds, provider_funds, escrow_bump)
+        instructions::dispute::resolve_dispute_handler(ctx, approver_funds, provider_funds)
     }
 
     pub fn change_dispute_flag(ctx: Context<ChangeDisputeFlag>) -> Result<()> {
         instructions::dispute::change_dispute_flag_handler(ctx)
     }
 
-    pub fn release_funds(ctx: Context<ReleaseFunds>, escrow_bump: u8,) -> Result<()> {
-        instructions::escrow::release_funds_handler(ctx, escrow_bump)
+    pub fn release_funds(ctx: Context<ReleaseFunds>) -> Result<()> {
+        instructions::escrow::release_funds_handler(ctx)
     }
 
     pub fn change_escrow_properties(
@@ -57,13 +56,13 @@ pub mod escrow {
         instructions::escrow::change_escrow_properties_handler(ctx, new_data)
     }
 
-    pub fn fund_escrow(ctx: Context<FundEscrow>, amount: u64, bump: u8) -> Result<()> {
-        instructions::escrow::fund_escrow_handler(ctx, amount, bump)
+    pub fn fund_escrow(ctx: Context<FundEscrow>, amount: u64) -> Result<()> {
+        instructions::escrow::fund_escrow_handler(ctx, amount)
     }
 
     pub fn change_milestone_status(
         ctx: Context<ChangeMilestoneStatus>,
-        milestone_index: i128,
+        milestone_index: u32,
         new_status: String,
         new_evidence: Option<String>,
     ) -> Result<()> {
@@ -77,7 +76,7 @@ pub mod escrow {
 
     pub fn change_milestone_flag(
         ctx: Context<ChangeMilestoneFlag>,
-        milestone_index: i128,
+        milestone_index: u32,
         new_flag: bool,
     ) -> Result<()> {
         instructions::milestone::change_milestone_flag_handler(ctx, milestone_index, new_flag)
