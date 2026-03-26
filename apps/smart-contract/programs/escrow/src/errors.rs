@@ -58,4 +58,12 @@ pub enum EscrowError {
     #[msg("Not all milestones are settled")] NotAllMilestonesSettled,
     #[msg("No remaining funds to withdraw")] NoRemainingFunds,
     #[msg("Milestone amount cannot be zero")] MilestoneAmountCannotBeZero,
+    #[msg("Address is not KYC verified")] AddressNotKycVerified,
+    #[msg("Address already verified")] AddressAlreadyVerified,
+    #[msg("Address not verified")] AddressNotVerified,
+    #[msg("Travel rule data required for this amount")] TravelRuleRequired,
+    #[msg("Compliance registry already initialized")] ComplianceRegistryAlreadyInitialized,
+    #[msg("Only compliance authority can perform this action")] OnlyComplianceAuthority,
+    #[msg("Escrow compliance already set")] EscrowComplianceAlreadySet,
+    #[msg("Sanctioned jurisdiction")] SanctionedJurisdiction,
 }

@@ -100,3 +100,35 @@ pub struct RemainingFundsWithdrawn {
     pub approver: Pubkey,
     pub amount: u64,
 }
+
+// Compliance Events
+
+#[event]
+pub struct ComplianceRegistryInitialized {
+    pub authority: Pubkey,
+    pub travel_rule_threshold: u64,
+}
+
+#[event]
+pub struct AddressKycVerified {
+    pub address: Pubkey,
+    pub kyc_provider: String,
+    pub jurisdiction: String,
+    pub risk_score: u8,
+}
+
+#[event]
+pub struct AddressKycRevoked {
+    pub address: Pubkey,
+}
+
+#[event]
+pub struct EscrowComplianceSet {
+    pub escrow_address: Pubkey,
+    pub requires_kyc: bool,
+}
+
+#[event]
+pub struct TravelRuleDataSet {
+    pub escrow_address: Pubkey,
+}

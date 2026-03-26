@@ -155,4 +155,44 @@ pub mod escrow {
     ) -> Result<()> {
         instructions::multi_release::withdraw_remaining_funds_handler(ctx)
     }
+
+    // ============================
+    // Compliance Instructions
+    // ============================
+
+    pub fn initialize_compliance_registry(
+        ctx: Context<InitializeComplianceRegistry>,
+        travel_rule_threshold: u64,
+    ) -> Result<()> {
+        instructions::compliance::initialize_compliance_registry_handler(ctx, travel_rule_threshold)
+    }
+
+    pub fn verify_address(
+        ctx: Context<VerifyAddress>,
+        kyc_provider: String,
+        jurisdiction: String,
+        risk_score: u8,
+    ) -> Result<()> {
+        instructions::compliance::verify_address_handler(ctx, kyc_provider, jurisdiction, risk_score)
+    }
+
+    pub fn revoke_verification(
+        ctx: Context<RevokeVerification>,
+    ) -> Result<()> {
+        instructions::compliance::revoke_verification_handler(ctx)
+    }
+
+    pub fn set_escrow_compliance(
+        ctx: Context<SetEscrowCompliance>,
+        requires_kyc: bool,
+    ) -> Result<()> {
+        instructions::compliance::set_escrow_compliance_handler(ctx, requires_kyc)
+    }
+
+    pub fn set_travel_rule_data(
+        ctx: Context<SetTravelRuleData>,
+        travel_rule: state::TravelRuleData,
+    ) -> Result<()> {
+        instructions::compliance::set_travel_rule_data_handler(ctx, travel_rule)
+    }
 }
