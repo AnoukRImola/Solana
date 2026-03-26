@@ -23,10 +23,6 @@ export class EscrowOperationWithSignerDto {
 	@IsNotEmpty({ message: 'The amount must not be empty' })
 	@IsString()
 	amount: string
-
-	@IsOptional({ message: 'The original currency is optional' })
-	@IsString()
-	originalCurrency?: string
 }
 
 export class EscrowOperationWithServiceProviderDto {
@@ -123,11 +119,11 @@ export class ChangeMilestoneFlagDto {
 	@IsString()
 	milestoneIndex: string
 
-	@IsNotEmpty({ message: 'The new status funds must not be empty' })
+	@IsNotEmpty({ message: 'The new flag must not be empty' })
 	@IsBoolean()
 	newFlag: boolean
 
-	@IsNotEmpty({ message: 'The service provider address must not be empty' })
+	@IsNotEmpty({ message: 'The approver address must not be empty' })
 	@IsString()
 	@IsAddressValid()
 	approver: string
@@ -213,48 +209,6 @@ export class EscrowDto {
 	@IsNotEmpty({ message: 'The receiver memo must not be empty' })
 	@IsNumber()
 	receiverMemo: number
-
-	@IsOptional({ message: 'The original currency must not be empty' })
-	@IsObject()
-	swapData?: EscrowSwapDataDTO
-}
-
-export class EscrowSwapDataDTO {
-	@IsNotEmpty({ message: 'The original currency must not be empty' })
-	@IsString()
-	@IsAmountValid()
-	originalCurrency: string
-
-	@IsNotEmpty({ message: 'The conversion tx hash must not be empty' })
-	@IsString()
-	conversionTxHash: string
-
-	@IsNotEmpty({ message: 'The conversion timestamp must not be empty' })
-	@IsNumber()
-	conversionTimestamp: number
-
-	@IsNotEmpty({ message: 'The original amount must not be empty' })
-	@IsString()
-	@IsAmountValid()
-	originalAmount: string
-
-	@IsNotEmpty({
-		message: 'The token amount to return or convert must not be empty',
-	})
-	@IsString()
-	@IsAmountValid()
-	tokenAmount: string
-
-	@IsNotEmpty({
-		message: 'The token currency to return or convert must not be empty',
-	})
-	@IsString()
-	@IsAmountValid()
-	tokenCurrency: string
-
-	@IsNotEmpty({ message: 'The conversion rate must not be empty' })
-	@IsString()
-	conversionRate: string
 }
 
 export class UpdateEscrowDTO {
@@ -270,4 +224,120 @@ export class UpdateEscrowDTO {
 
 	@IsNotEmpty({ message: 'The escrow data must not be empty' })
 	escrow: EscrowDto
+}
+
+// ============================
+// Multi-Release DTOs
+// ============================
+
+export class MultiReleaseEscrowOperationDto {
+	@IsNotEmpty({ message: 'The contractId must not be empty' })
+	@IsString()
+	@IsAddressValid()
+	contractId: string
+
+	@IsNotEmpty({ message: 'The signer must not be empty' })
+	@IsString()
+	@IsAddressValid()
+	signer: string
+
+	@IsNotEmpty({ message: 'The amount must not be empty' })
+	@IsString()
+	amount: string
+}
+
+export class MultiReleaseMilestoneOperationDto {
+	@IsNotEmpty({ message: 'The contractId must not be empty' })
+	@IsString()
+	@IsAddressValid()
+	contractId: string
+
+	@IsNotEmpty({ message: 'The milestone index must not be empty' })
+	@IsString()
+	milestoneIndex: string
+
+	@IsNotEmpty({ message: 'The signer must not be empty' })
+	@IsString()
+	@IsAddressValid()
+	signer: string
+}
+
+export class MultiReleaseMilestoneStatusDto {
+	@IsNotEmpty({ message: 'The contractId must not be empty' })
+	@IsString()
+	@IsAddressValid()
+	contractId: string
+
+	@IsNotEmpty({ message: 'The milestone index must not be empty' })
+	@IsString()
+	milestoneIndex: string
+
+	@IsNotEmpty({ message: 'The new status must not be empty' })
+	@IsString()
+	newStatus: string
+
+	@IsOptional()
+	@IsString()
+	newEvidence?: string
+
+	@IsNotEmpty({ message: 'The service provider must not be empty' })
+	@IsString()
+	@IsAddressValid()
+	serviceProvider: string
+}
+
+export class MultiReleaseMilestoneApproveDto {
+	@IsNotEmpty({ message: 'The contractId must not be empty' })
+	@IsString()
+	@IsAddressValid()
+	contractId: string
+
+	@IsNotEmpty({ message: 'The milestone index must not be empty' })
+	@IsString()
+	milestoneIndex: string
+
+	@IsNotEmpty({ message: 'The approved flag must not be empty' })
+	@IsBoolean()
+	approved: boolean
+
+	@IsNotEmpty({ message: 'The approver must not be empty' })
+	@IsString()
+	@IsAddressValid()
+	approver: string
+}
+
+export class MultiReleaseDisputeResolutionDto {
+	@IsNotEmpty({ message: 'The contractId must not be empty' })
+	@IsString()
+	@IsAddressValid()
+	contractId: string
+
+	@IsNotEmpty({ message: 'The milestone index must not be empty' })
+	@IsString()
+	milestoneIndex: string
+
+	@IsNotEmpty({ message: 'The dispute resolver must not be empty' })
+	@IsString()
+	@IsAddressValid()
+	disputeResolver: string
+
+	@IsNotEmpty({ message: 'The approver funds must not be empty' })
+	@IsString()
+	approverFunds: string
+
+	@IsNotEmpty({ message: 'The receiver funds must not be empty' })
+	@IsString()
+	receiverFunds: string
+}
+
+export class WithdrawRemainingFundsDto {
+	@IsNotEmpty({ message: 'The contractId must not be empty' })
+	@IsString()
+	@IsAddressValid()
+	contractId: string
+
+	@IsNotEmpty({ message: 'The approver must not be empty' })
+	@IsString()
+	@IsAddressValid()
+	approver: string
 }

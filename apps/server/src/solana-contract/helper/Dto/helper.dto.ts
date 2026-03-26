@@ -12,6 +12,10 @@ export class SendTransactionDto {
 	@IsString()
 	signedXdr: string
 
+	@IsNotEmpty({ message: 'The queueKey must not be empty' })
+	@IsString()
+	queueKey: string
+
 	@IsBoolean()
 	@IsOptional()
 	returnEscrowDataIsRequired: boolean

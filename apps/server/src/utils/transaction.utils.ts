@@ -4,12 +4,11 @@ import {
 	Connection,
 	ConnectionConfig,
 	Keypair,
-	PublicKey,
-	SystemProgram,
 	Transaction,
 	TransactionInstruction,
 	sendAndConfirmTransaction,
 } from '@solana/web3.js'
+import { PublicKey } from '@solana/web3.js'
 
 export async function buildTransaction({
 	account,
@@ -26,10 +25,9 @@ export async function buildTransaction({
 
 	if (!recentBlockhash) throw new Error('Failed to get recent blockhash')
 
-	const feePayer = account
 	const transaction = new Transaction({
 		recentBlockhash: recentBlockhash.blockhash,
-		feePayer, // The 'account' parameter is used as the feePayer for the Solana transaction.
+		feePayer: account,
 	})
 
 	for (const instruction of operations) {
@@ -37,43 +35,6 @@ export async function buildTransaction({
 	}
 
 	return transaction
-}
-
-export function buildInvokeContractInstruction({
-	programId,
-	escrowAccount,
-	payer,
-	data,
-	additionalAccounts = [],
-}: {
-	programId: PublicKey
-	escrowAccount: PublicKey
-	payer: PublicKey
-	data: Buffer
-	additionalAccounts?: Array<{
-		pubkey: PublicKey
-		isSigner: boolean
-		isWritable: boolean
-	}>
-}): TransactionInstruction {
-	// Create the account metadata array, starting with required accounts
-	const keys = [
-		{ pubkey: escrowAccount, isSigner: true, isWritable: true },
-		{ pubkey: payer, isSigner: true, isWritable: true },
-		{ pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
-	]
-
-	// Add any additional accounts if provided
-	if (additionalAccounts?.length) {
-		keys.push(...additionalAccounts)
-	}
-
-	// Create and return the transaction instruction
-	return new TransactionInstruction({
-		keys,
-		programId,
-		data,
-	})
 }
 
 export async function signAndSendTransaction({
@@ -86,19 +47,16 @@ export async function signAndSendTransaction({
 	connection: Connection
 }): Promise<{ signature: string; status: string }> {
 	try {
-		const signerKeypair = signer
 		const { blockhash } = await connection.getLatestBlockhash()
-
-		// Get latest blockhash
 		transaction.recentBlockhash = blockhash
-		transaction.sign(signerKeypair)
+		transaction.sign(signer)
 
 		const signature = await sendAndConfirmTransaction(
 			connection,
 			transaction,
-			[signerKeypair],
+			[signer],
 			{
-				commitment: 'confirmed', // We can use 'finalized' for stronger confirmation
+				commitment: 'confirmed',
 				preflightCommitment: 'confirmed',
 			},
 		)

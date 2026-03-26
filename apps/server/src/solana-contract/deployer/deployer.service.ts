@@ -1,84 +1,223 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common'
-// --- SOLANA IMPORTS ---
+import { BN } from '@coral-xyz/anchor'
 import {
-	Connection,
 	Keypair,
 	PublicKey,
 	SystemProgram,
-	Transaction,
 } from '@solana/web3.js'
+import {
+	getAssociatedTokenAddress,
+	createAssociatedTokenAccountInstruction,
+	TOKEN_PROGRAM_ID,
+} from '@solana/spl-token'
 import { apiConfig } from 'src/config/api.config'
-import { ApiResponse } from 'src/interfaces/response.interface'
-import { HelperService } from 'src/solana-contract/helper/helper.service'
-import { serializeEscrow } from 'src/utils/parse.utils'
-import { buildInvokeContractInstruction } from 'src/utils/transaction.utils'
+import {
+	getConnection,
+	getProgram,
+	deriveEscrowPda,
+	deriveMultiReleaseEscrowPda,
+} from 'src/config/constants/program.constant'
+import type { ApiResponse } from 'src/interfaces/response.interface'
 import { PendingWriteQueueService } from '../queue/pending-write-queue.service'
-import { InvokeDeployerContractDto } from './Dto/deployer.dto'
-
-// Documentation utilisée :
-// https://solana-labs.github.io/solana-web3.js/classes/Connection.html
-// https://solanacookbook.com/references/basic-transactions.html
+import type { InvokeDeployerContractDto } from './Dto/deployer.dto'
+import type { InvokeMultiReleaseDeployerDto } from './Dto/deployer.dto'
 
 @Injectable()
 export class DeployerService {
-	private solanaServer: Connection
-
-	constructor(
-		private pendingWriteQueue: PendingWriteQueueService,
-		private helperService: HelperService,
-	) {
-		this.solanaServer = this.helperService.solanaServer
-	}
+	constructor(private pendingWriteQueue: PendingWriteQueueService) {}
 
 	async invokeDeployerContract(
 		escrowProperties: InvokeDeployerContractDto,
 	): Promise<ApiResponse> {
 		try {
-			const escrowAccount = Keypair.generate()
+			const program = getProgram()
+			const connection = getConnection()
+			const signer = new PublicKey(escrowProperties.signer)
+			const mint = new PublicKey(escrowProperties.trustline)
 
-			// Définition par defaut jalon de l'escrow
-			for (const milestone of escrowProperties.milestones) {
-				milestone.approved_flag = false
-				milestone.status = 'pending'
-				milestone.evidence = ''
-				milestone.description = escrowProperties.description
-			}
+			const [escrowPda] = deriveEscrowPda(escrowProperties.engagementId)
 
-			const programId = new PublicKey(apiConfig.solanaProgramId)
-			const payer = new PublicKey(escrowProperties.signer)
-			const escrowData = serializeEscrow(escrowProperties)
-			// ? What programId to use ? Ask team. -Andler.
-			const instruction = buildInvokeContractInstruction({
-				escrowAccount: escrowAccount.publicKey,
-				data: escrowData,
-				programId,
-				payer,
-			})
-			const transaction = new Transaction().add(
-				SystemProgram.createAccount({
-					fromPubkey: payer,
-					newAccountPubkey: escrowAccount.publicKey,
-					lamports:
-						await this.solanaServer.getMinimumBalanceForRentExemption(200),
-					space: 200,
-					programId,
-				}),
-				instruction,
+			// Derive the escrow token account (ATA owned by escrow PDA)
+			const escrowTokenAccount = await getAssociatedTokenAddress(
+				mint,
+				escrowPda,
+				true, // allowOwnerOffCurve for PDA
 			)
 
-			this.pendingWriteQueue.add(escrowAccount.publicKey.toBase58(), {
+			const milestones = escrowProperties.milestones.map((m) => ({
+				description: m.description || escrowProperties.description,
+				status: 'Pending',
+				evidence: '',
+				approvedFlag: false,
+			}))
+
+			const escrowData = {
+				engagementId: escrowProperties.engagementId,
+				title: escrowProperties.title,
+				description: escrowProperties.description,
+				amount: new BN(escrowProperties.amount),
+				platformFee: new BN(escrowProperties.platformFee),
+				milestones,
+				flags: { dispute: false, release: false, resolved: false },
+				trustline: {
+					address: mint,
+					decimals: escrowProperties.trustlineDecimals,
+				},
+				receiverMemo: new BN(escrowProperties.receiverMemo),
+				roles: {
+					approver: new PublicKey(escrowProperties.approver),
+					serviceProvider: new PublicKey(escrowProperties.serviceProvider),
+					platformAddress: new PublicKey(escrowProperties.platformAddress),
+					releaseSigner: new PublicKey(escrowProperties.releaseSigner),
+					disputeResolver: new PublicKey(escrowProperties.disputeResolver),
+					receiver: new PublicKey(escrowProperties.receiver),
+				},
+				balance: new BN(0),
+				isInitialized: false,
+			}
+
+			// Build the transaction: create ATA + initialize escrow
+			const createAtaIx = createAssociatedTokenAccountInstruction(
+				signer,
+				escrowTokenAccount,
+				escrowPda,
+				mint,
+			)
+
+			const initIx = await program.methods
+				.initializeEscrow(escrowData)
+				.accounts({
+					escrowAccount: escrowPda,
+					initializer: signer,
+					systemProgram: SystemProgram.programId,
+				})
+				.instruction()
+
+			const { blockhash } = await connection.getLatestBlockhash()
+			const tx = new (await import('@solana/web3.js')).Transaction({
+				recentBlockhash: blockhash,
+				feePayer: signer,
+			})
+			tx.add(createAtaIx, initIx)
+
+			const contractId = escrowPda.toBase58()
+
+			this.pendingWriteQueue.add(contractId, {
 				type: 'SAVE_ESCROW',
-				payload: { escrowProperties },
+				payload: { escrowProperties, contractId },
 			})
 
-			const unsignedTx = transaction
+			const unsignedTx = tx
 				.serialize({ requireAllSignatures: false })
 				.toString('base64')
 
 			return {
-				status: 'SUCCESS' as any, // À adapter selon votre enum
+				status: 'SUCCESS',
 				unsignedTransaction: unsignedTx,
-				contract_id: escrowAccount.publicKey.toBase58(),
+				contract_id: contractId,
+				engagement_id: escrowProperties.engagementId,
+			}
+		} catch (error) {
+			throw new HttpException(
+				{ status: HttpStatus.BAD_REQUEST, message: error.message },
+				HttpStatus.BAD_REQUEST,
+			)
+		}
+	}
+
+	async invokeMultiReleaseDeployerContract(
+		escrowProperties: InvokeMultiReleaseDeployerDto,
+	): Promise<ApiResponse> {
+		try {
+			const program = getProgram()
+			const connection = getConnection()
+			const signer = new PublicKey(escrowProperties.signer)
+			const mint = new PublicKey(escrowProperties.trustline)
+
+			const [escrowPda] = deriveMultiReleaseEscrowPda(
+				escrowProperties.engagementId,
+			)
+
+			const escrowTokenAccount = await getAssociatedTokenAddress(
+				mint,
+				escrowPda,
+				true,
+			)
+
+			const milestones = escrowProperties.milestones.map((m) => ({
+				description: m.description,
+				status: 'Pending',
+				evidence: '',
+				amount: new BN(m.amount),
+				receiver: new PublicKey(m.receiver),
+				flags: {
+					approved: false,
+					disputed: false,
+					released: false,
+					resolved: false,
+				},
+			}))
+
+			const escrowData = {
+				engagementId: escrowProperties.engagementId,
+				title: escrowProperties.title,
+				description: escrowProperties.description,
+				platformFee: new BN(escrowProperties.platformFee),
+				milestones,
+				trustline: {
+					address: mint,
+					decimals: escrowProperties.trustlineDecimals,
+				},
+				roles: {
+					approver: new PublicKey(escrowProperties.approver),
+					serviceProvider: new PublicKey(escrowProperties.serviceProvider),
+					platformAddress: new PublicKey(escrowProperties.platformAddress),
+					releaseSigner: new PublicKey(escrowProperties.releaseSigner),
+					disputeResolver: new PublicKey(escrowProperties.disputeResolver),
+				},
+				balance: new BN(0),
+				isInitialized: false,
+			}
+
+			const createAtaIx = createAssociatedTokenAccountInstruction(
+				signer,
+				escrowTokenAccount,
+				escrowPda,
+				mint,
+			)
+
+			const initIx = await program.methods
+				.initializeMultiReleaseEscrow(escrowData)
+				.accounts({
+					escrowAccount: escrowPda,
+					initializer: signer,
+					systemProgram: SystemProgram.programId,
+				})
+				.instruction()
+
+			const { blockhash } = await connection.getLatestBlockhash()
+			const tx = new (await import('@solana/web3.js')).Transaction({
+				recentBlockhash: blockhash,
+				feePayer: signer,
+			})
+			tx.add(createAtaIx, initIx)
+
+			const contractId = escrowPda.toBase58()
+
+			this.pendingWriteQueue.add(contractId, {
+				type: 'SAVE_ESCROW',
+				payload: { escrowProperties, contractId },
+			})
+
+			const unsignedTx = tx
+				.serialize({ requireAllSignatures: false })
+				.toString('base64')
+
+			return {
+				status: 'SUCCESS',
+				unsignedTransaction: unsignedTx,
+				contract_id: contractId,
+				engagement_id: escrowProperties.engagementId,
 			}
 		} catch (error) {
 			throw new HttpException(
