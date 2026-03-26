@@ -53,3 +53,50 @@ pub struct EscrowPropertiesChanged {
     pub escrow_id: String,
     pub platform_address: Pubkey,
 }
+
+// Multi-Release Events
+
+#[event]
+pub struct MultiReleaseEscrowInitialized {
+    pub escrow_id: String,
+    pub initializer: Pubkey,
+    pub milestones_count: u32,
+}
+
+#[event]
+pub struct MultiReleaseEscrowFunded {
+    pub escrow_id: String,
+    pub funder: Pubkey,
+    pub amount: u64,
+}
+
+#[event]
+pub struct MilestoneFundsReleased {
+    pub escrow_id: String,
+    pub milestone_index: u32,
+    pub receiver: Pubkey,
+    pub receiver_amount: i128,
+}
+
+#[event]
+pub struct MilestoneDisputed {
+    pub escrow_id: String,
+    pub milestone_index: u32,
+    pub initiator: Pubkey,
+}
+
+#[event]
+pub struct MilestoneDisputeResolved {
+    pub escrow_id: String,
+    pub milestone_index: u32,
+    pub resolver: Pubkey,
+    pub approver_funds: i128,
+    pub receiver_funds: i128,
+}
+
+#[event]
+pub struct RemainingFundsWithdrawn {
+    pub escrow_id: String,
+    pub approver: Pubkey,
+    pub amount: u64,
+}

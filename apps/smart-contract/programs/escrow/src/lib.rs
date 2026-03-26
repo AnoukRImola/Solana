@@ -20,6 +20,10 @@ declare_id!("A2f8EQ1iYEFLkiN1UTDBkMYKR2Hxw7vqBb8srcVjGxk4");
 pub mod escrow {
     use super::*;
 
+    // ============================
+    // Single-Release Instructions
+    // ============================
+
     pub fn initialize_escrow(
         ctx: Context<InitializeEscrow>,
         new_escrow: state::EscrowData,
@@ -80,5 +84,75 @@ pub mod escrow {
         new_flag: bool,
     ) -> Result<()> {
         instructions::milestone::change_milestone_flag_handler(ctx, milestone_index, new_flag)
+    }
+
+    // ============================
+    // Multi-Release Instructions
+    // ============================
+
+    pub fn initialize_multi_release_escrow(
+        ctx: Context<InitializeMultiReleaseEscrow>,
+        new_escrow: state::MultiReleaseEscrowData,
+    ) -> Result<()> {
+        instructions::multi_release::initialize_multi_release_escrow_handler(ctx, new_escrow)
+    }
+
+    pub fn fund_multi_release_escrow(
+        ctx: Context<FundMultiReleaseEscrow>,
+        amount: u64,
+    ) -> Result<()> {
+        instructions::multi_release::fund_multi_release_escrow_handler(ctx, amount)
+    }
+
+    pub fn change_multi_release_milestone_status(
+        ctx: Context<ChangeMultiReleaseMilestoneStatus>,
+        milestone_index: u32,
+        new_status: String,
+        new_evidence: Option<String>,
+    ) -> Result<()> {
+        instructions::multi_release::change_multi_release_milestone_status_handler(
+            ctx, milestone_index, new_status, new_evidence,
+        )
+    }
+
+    pub fn approve_multi_release_milestone(
+        ctx: Context<ApproveMultiReleaseMilestone>,
+        milestone_index: u32,
+        approved: bool,
+    ) -> Result<()> {
+        instructions::multi_release::approve_multi_release_milestone_handler(
+            ctx, milestone_index, approved,
+        )
+    }
+
+    pub fn release_milestone_funds(
+        ctx: Context<ReleaseMilestoneFunds>,
+        milestone_index: u32,
+    ) -> Result<()> {
+        instructions::multi_release::release_milestone_funds_handler(ctx, milestone_index)
+    }
+
+    pub fn dispute_milestone(
+        ctx: Context<DisputeMultiReleaseMilestone>,
+        milestone_index: u32,
+    ) -> Result<()> {
+        instructions::multi_release::dispute_multi_release_milestone_handler(ctx, milestone_index)
+    }
+
+    pub fn resolve_milestone_dispute(
+        ctx: Context<ResolveMultiReleaseMilestoneDispute>,
+        milestone_index: u32,
+        approver_funds: i128,
+        receiver_funds: i128,
+    ) -> Result<()> {
+        instructions::multi_release::resolve_multi_release_milestone_dispute_handler(
+            ctx, milestone_index, approver_funds, receiver_funds,
+        )
+    }
+
+    pub fn withdraw_remaining_funds(
+        ctx: Context<WithdrawRemainingFunds>,
+    ) -> Result<()> {
+        instructions::multi_release::withdraw_remaining_funds_handler(ctx)
     }
 }

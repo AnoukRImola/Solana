@@ -49,4 +49,13 @@ pub enum EscrowError {
     #[msg("Too many milestones in escrow")] TooManyMilestones,
     #[msg("Unauthorized")] Unauthorized,
     #[msg("Platform fee exceeds maximum (99%)")] PlatformFeeTooHigh,
+    #[msg("Milestone already released")] MilestoneAlreadyReleased,
+    #[msg("Milestone not approved")] MilestoneNotApproved,
+    #[msg("Milestone is disputed")] MilestoneIsDisputed,
+    #[msg("Milestone already disputed")] MilestoneAlreadyDisputed,
+    #[msg("Milestone not disputed")] MilestoneNotDisputed,
+    #[msg("Milestone already resolved")] MilestoneAlreadyResolved,
+    #[msg("Not all milestones are settled")] NotAllMilestonesSettled,
+    #[msg("No remaining funds to withdraw")] NoRemainingFunds,
+    #[msg("Milestone amount cannot be zero")] MilestoneAmountCannotBeZero,
 }
