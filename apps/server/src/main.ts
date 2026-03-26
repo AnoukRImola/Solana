@@ -44,7 +44,7 @@ async function bootstrap() {
 	const config = new DocumentBuilder()
 		.setTitle('👋🏼  Welcome to Trustless Work API')
 		.setDescription(
-			"Trustless Work is a escrow-as-a-service platform built on Soroban, Stellar's smart contract platform. It is designed to provide secure, transparent, and agile escrow solutions. See our [API Documentation](https://trustless-work.gitbook.io/trustless-work)",
+			'Trustless Work is an escrow-as-a-service platform built on Solana. It provides secure, transparent, and agile escrow solutions with compliance (KYC/AML/Travel Rule). See our [API Documentation](https://trustless-work.gitbook.io/trustless-work)',
 		)
 		.setVersion('1.0')
 		.addBearerAuth(

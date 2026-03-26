@@ -5,7 +5,6 @@ solana_version = "2.1.0"
 [workspace]
 members = [
   "programs/escrow",
-  "programs/token",
 ]
 
 [features]
@@ -14,7 +13,6 @@ skip-lint = false
 
 [programs.localnet]
 escrow = "A2f8EQ1iYEFLkiN1UTDBkMYKR2Hxw7vqBb8srcVjGxk4"
-token = "6En2g3XUQgZSBEgBE1DF1sVeRik4KNvug151Zswz8oR5"
 
 [registry]
 url = "https://api.apr.dev"

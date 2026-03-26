@@ -1,8 +1,8 @@
-import * as StellarSDK from '@stellar/stellar-sdk'
+import { PublicKey } from '@solana/web3.js'
 
-export function validateAddress(address) {
+export function validateAddress(address: string): boolean {
 	try {
-		new StellarSDK.Address(address)
+		new PublicKey(address)
 		return true
 	} catch (error) {
 		return false

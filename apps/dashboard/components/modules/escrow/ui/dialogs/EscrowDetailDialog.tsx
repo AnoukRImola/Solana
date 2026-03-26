@@ -94,7 +94,7 @@ const EscrowDetailDialog = ({
 						<div className="w-full">
 							<div className="flex flex-col gap-2">
 								<Link
-									href={`https://stellar.expert/explorer/testnet/contract/${selectedEscrow.contractId}`}
+									href={`https://explorer.solana.com/address/${selectedEscrow.contractId}?cluster=devnet`}
 									target="_blank"
 									className="hover:underline"
 								>

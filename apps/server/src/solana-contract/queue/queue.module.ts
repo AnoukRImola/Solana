@@ -1,4 +1,4 @@
-// src/stellar-contract/queue/pending-write-queue.module.ts
+// src/solana-contract/queue/pending-write-queue.module.ts
 import { Module } from '@nestjs/common'
 import { PendingWriteQueueService } from './pending-write-queue.service'
 

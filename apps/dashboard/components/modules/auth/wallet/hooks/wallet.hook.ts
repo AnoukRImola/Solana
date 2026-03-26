@@ -1,8 +1,6 @@
-import type { ISupportedWallet } from '@creit.tech/stellar-wallets-kit'
 import { useWallet as useSolanaWallet } from '@solana/wallet-adapter-react'
 import { useEffect } from 'react'
 import { useGlobalAuthenticationStore } from '~/core/store/data'
-import { kit } from '../constants/wallet-kit.constant'
 
 export const useWallet = () => {
 	const { connectWalletStore, disconnectWalletStore, walletType, address } =
@@ -15,7 +13,7 @@ export const useWallet = () => {
 
 	// Handle Solana wallet reconnection
 	useEffect(() => {
-		if (walletType === 'solana' && solanaConnected && publicKey) {
+		if (solanaConnected && publicKey) {
 			const walletAddress = publicKey.toString()
 			if (walletAddress !== address) {
 				connectWalletStore(walletAddress, 'Solana Wallet', 'solana')
@@ -24,25 +22,12 @@ export const useWallet = () => {
 	}, [solanaConnected, publicKey, walletType, address, connectWalletStore])
 
 	const connectWallet = async () => {
-		await kit.openModal({
-			modalTitle: 'Connect to your favorite wallet',
-			onWalletSelected: async (option: ISupportedWallet) => {
-				kit.setWallet(option.id)
-
-				const { address } = await kit.getAddress()
-				const { name } = option
-
-				connectWalletStore(address, name, 'stellar')
-			},
-		})
+		// TODO: PR7 — Solana wallet connection is handled by WalletMultiButton
+		console.warn('Use Solana wallet adapter WalletMultiButton to connect.')
 	}
 
 	const disconnectWallet = async () => {
-		if (walletType === 'solana') {
-			await disconnectSolana()
-		} else {
-			await kit.disconnect()
-		}
+		await disconnectSolana()
 		disconnectWalletStore()
 	}
 

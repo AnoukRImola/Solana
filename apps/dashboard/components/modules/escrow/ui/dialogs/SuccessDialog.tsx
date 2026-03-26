@@ -49,18 +49,18 @@ const SuccessDialog = ({
 					<DialogDescription className="mb-5">
 						{description}{' '}
 						<Link
-							href={`https://stellar.expert/explorer/testnet/contract/${recentEscrow?.contractId}`}
+							href={`https://explorer.solana.com/address/${recentEscrow?.contractId}?cluster=devnet`}
 							className="text-primary"
 							target="_blank"
 						>
-							Stellar Explorer
+							Solana Explorer
 						</Link>
 					</DialogDescription>
 
 					<div className="flex items-center justify-center">
 						<Image
-							src="/assets/stellar-expert-blue.svg"
-							alt="Stellar Explorer Icon"
+							src="/assets/solana-logo.svg"
+							alt="Solana Explorer Icon"
 							className="mt-6"
 							width={80}
 							height={80}
@@ -154,11 +154,11 @@ export const SuccessReleaseDialog = ({
 					<DialogDescription className="mb-5">
 						{description}{' '}
 						<Link
-							href={`https://stellar.expert/explorer/testnet/contract/${escrow?.contractId}`}
+							href={`https://explorer.solana.com/address/${escrow?.contractId}?cluster=devnet`}
 							className="text-primary"
 							target="_blank"
 						>
-							Stellar Explorer
+							Solana Explorer
 						</Link>
 					</DialogDescription>
 				</DialogHeader>
@@ -283,11 +283,11 @@ export const SuccessResolveDisputeDialog = ({
 					<DialogDescription className="mb-5">
 						{description}{' '}
 						<Link
-							href={`https://stellar.expert/explorer/testnet/contract/${escrow?.contractId}`}
+							href={`https://explorer.solana.com/address/${escrow?.contractId}?cluster=devnet`}
 							className="text-primary"
 							target="_blank"
 						>
-							Stellar Explorer
+							Solana Explorer
 						</Link>
 					</DialogDescription>
 				</DialogHeader>

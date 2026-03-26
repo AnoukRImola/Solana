@@ -15,18 +15,12 @@
 
 ## Description
 
-This repository contains the API code for interacting with Trustless smart contracts. It connects the frontend with the blockchain, ensuring secure communication and reliable contract management within the dApp.
+This repository contains the API code for interacting with Trustless Work smart contracts on Solana. It connects the frontend with the blockchain, ensuring secure communication and reliable escrow management within the dApp.
 
 ## Project setup
 
 ```bash
 bun install
-```
-
-## Require installations
-
-```bash
-bun install @stellar/stellar-sdk
 ```
 
 ## Compile and run the project
@@ -59,7 +53,7 @@ bun run test:cov
 
 ### Use Postman, ThunderClient, Swagger, or another tools to Http requests
 
-Follow the API Doc, and check your Contract information here: [TestNet Stellar](https://stellar.expert/explorer/testnet)
+Follow the API Doc, and check your Contract information here: [Solana Explorer (Devnet)](https://explorer.solana.com/?cluster=devnet)
 
 ### To use Swagger, please follow the information below
 

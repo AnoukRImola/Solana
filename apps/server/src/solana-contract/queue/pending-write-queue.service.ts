@@ -1,4 +1,4 @@
-// src/stellar-contract/queue/pending-write-queue.service.ts
+// src/solana-contract/queue/pending-write-queue.service.ts
 import { Injectable } from '@nestjs/common'
 
 @Injectable()
