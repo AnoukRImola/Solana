@@ -1,10 +1,11 @@
-// src/utils/validators/escrow.rs
 use anchor_lang::prelude::*;
 
 use crate::{
     errors::EscrowError,
-    state::{EscrowData, Milestone},
+    state::{EscrowData, Milestone, MAX_MILESTONES},
 };
+
+const MAX_PLATFORM_FEE_BPS: i128 = 9900; // 99%
 
 pub fn validate_funding_conditions(
     escrow: &EscrowData,
@@ -81,19 +82,18 @@ pub fn validate_escrow_property_change_conditions(
 }
 
 pub fn validate_initialize_escrow_conditions(
-    escrow_account_info: &AccountInfo,
     escrow_data: &EscrowData,
 ) -> std::result::Result<(), EscrowError> {
-    if !escrow_account_info.data_is_empty() {
-        return Err(EscrowError::EscrowAlreadyInitialized.into());
-    }
-
     if escrow_data.amount == 0 {
-        return Err(EscrowError::AmountCannotBeZero.into());
+        return Err(EscrowError::AmountCannotBeZero);
     }
 
-    if escrow_data.milestones.len() > 10 {
-        return Err(EscrowError::TooManyMilestones.into());
+    if escrow_data.milestones.len() > MAX_MILESTONES {
+        return Err(EscrowError::TooManyMilestones);
+    }
+
+    if escrow_data.platform_fee > MAX_PLATFORM_FEE_BPS {
+        return Err(EscrowError::PlatformFeeTooHigh);
     }
 
     Ok(())
