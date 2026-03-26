@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import type { z } from 'zod'
 import type { EscrowPayload, Milestone } from '~/@types/escrow.entity'
+import { useWallet } from '~/components/modules/auth/wallet/hooks/wallet.hook'
 import {
 	useGlobalAuthenticationStore,
 	useGlobalBoundedStore,
@@ -22,6 +23,7 @@ interface useEditMilestonesDialogProps {
 const useEditMilestonesDialog = ({
 	setIsEditMilestoneDialogOpen,
 }: useEditMilestonesDialogProps) => {
+	const { signTransaction } = useWallet()
 	const { address } = useGlobalAuthenticationStore()
 	const selectedEscrow = useGlobalBoundedStore((state) => state.selectedEscrow)
 	const setIsEditingMilestones = useEscrowUIBoundedStore(
@@ -69,6 +71,8 @@ const useEditMilestonesDialog = ({
 		setIsEditingMilestones(true)
 
 		try {
+			if (!signTransaction) throw new Error('Wallet not connected')
+
 			const updatedEscrow = {
 				...JSON.parse(JSON.stringify(selectedEscrow)),
 				milestones: payload.milestones,
@@ -94,7 +98,7 @@ const useEditMilestonesDialog = ({
 				contractId: selectedEscrow.contractId || '',
 			}
 
-			const response = await editEscrow(newPayload)
+			const response = await editEscrow(newPayload, signTransaction)
 
 			if (response.status === 'SUCCESS') {
 				fetchAllEscrows({ address, type: activeTab || 'approver' })

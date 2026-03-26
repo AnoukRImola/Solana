@@ -2,6 +2,7 @@
 
 'use client'
 
+import { useWallet } from '~/components/modules/auth/wallet/hooks/wallet.hook'
 import {
 	useGlobalAuthenticationStore,
 	useGlobalBoundedStore,
@@ -11,6 +12,7 @@ import { startDispute } from '../../../services/start-dispute.service'
 import { useEscrowUIBoundedStore } from '../../../store/ui'
 
 const useStartDisputeEscrowDialog = () => {
+	const { signTransaction } = useWallet()
 	const { address } = useGlobalAuthenticationStore()
 	const setIsStartingDispute = useEscrowUIBoundedStore(
 		(state) => state.setIsStartingDispute,
@@ -34,10 +36,12 @@ const useStartDisputeEscrowDialog = () => {
 		if (!selectedEscrow) return
 
 		try {
+			if (!signTransaction) throw new Error('Wallet not connected')
+
 			const response = await startDispute({
 				contractId: selectedEscrow?.contractId,
 				signer: address,
-			})
+			}, signTransaction)
 
 			setIsStartingDispute(false)
 

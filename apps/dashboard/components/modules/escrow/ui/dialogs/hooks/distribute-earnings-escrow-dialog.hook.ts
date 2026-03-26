@@ -2,6 +2,7 @@
 
 'use client'
 
+import { useWallet } from '~/components/modules/auth/wallet/hooks/wallet.hook'
 import {
 	useGlobalAuthenticationStore,
 	useGlobalBoundedStore,
@@ -11,6 +12,7 @@ import { distributeEscrowEarnings } from '../../../services/distribute-escrow-ea
 import { useEscrowUIBoundedStore } from '../../../store/ui'
 
 const useDistributeEarningsEscrowDialog = () => {
+	const { signTransaction } = useWallet()
 	const { address } = useGlobalAuthenticationStore()
 	const setIsChangingStatus = useEscrowUIBoundedStore(
 		(state) => state.setIsChangingStatus,
@@ -37,12 +39,14 @@ const useDistributeEarningsEscrowDialog = () => {
 		if (!selectedEscrow) return
 
 		try {
+			if (!signTransaction) throw new Error('Wallet not connected')
+
 			const response = await distributeEscrowEarnings({
 				contractId: selectedEscrow?.contractId,
 				signer: address,
 				serviceProvider: selectedEscrow?.serviceProvider,
 				releaseSigner: selectedEscrow?.releaseSigner,
-			})
+			}, signTransaction)
 
 			if (response.status === 'SUCCESS') {
 				setIsSuccessReleaseDialogOpen(true)
