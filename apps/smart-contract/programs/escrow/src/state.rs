@@ -2,6 +2,11 @@ use anchor_lang::prelude::*;
 
 /// Maximum lengths for string fields
 pub const MAX_ENGAGEMENT_ID_LEN: usize = 64;
+pub const MAX_KYC_PROVIDER_LEN: usize = 32;
+pub const MAX_JURISDICTION_LEN: usize = 8;
+pub const MAX_TRAVEL_RULE_NAME_LEN: usize = 128;
+pub const MAX_TRAVEL_RULE_ACCOUNT_LEN: usize = 64;
+pub const MAX_TRANSFER_PURPOSE_LEN: usize = 128;
 pub const MAX_TITLE_LEN: usize = 64;
 pub const MAX_DESCRIPTION_LEN: usize = 256;
 pub const MAX_MILESTONE_DESCRIPTION_LEN: usize = 128;
@@ -177,4 +182,82 @@ impl MultiReleaseEscrowData {
     pub fn total_amount(&self) -> u64 {
         self.milestones.iter().map(|m| m.amount).sum()
     }
+}
+
+// ============================
+// Compliance State
+// ============================
+
+/// Global compliance registry — singleton PDA managed by an admin authority.
+#[account]
+#[derive(Debug)]
+pub struct ComplianceRegistry {
+    pub authority: Pubkey,
+    pub travel_rule_threshold: u64,
+    pub is_initialized: bool,
+}
+
+impl ComplianceRegistry {
+    pub const SPACE: usize = 8 + 32 + 8 + 1;
+}
+
+/// Per-address KYC verification record.
+#[account]
+#[derive(Debug)]
+pub struct AddressVerification {
+    pub address: Pubkey,
+    pub kyc_verified: bool,
+    pub kyc_provider: String,
+    pub kyc_timestamp: i64,
+    pub risk_score: u8,
+    pub jurisdiction: String,
+}
+
+impl AddressVerification {
+    pub const SPACE: usize = 8
+        + 32 // address
+        + 1  // kyc_verified
+        + 4 + MAX_KYC_PROVIDER_LEN
+        + 8  // kyc_timestamp (i64)
+        + 1  // risk_score (u8)
+        + 4 + MAX_JURISDICTION_LEN;
+}
+
+/// Travel Rule data attached to an escrow.
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, PartialEq)]
+pub struct TravelRuleData {
+    pub originator_name: String,
+    pub originator_account: String,
+    pub originator_jurisdiction: String,
+    pub beneficiary_name: String,
+    pub beneficiary_account: String,
+    pub beneficiary_jurisdiction: String,
+    pub transfer_purpose: String,
+}
+
+impl TravelRuleData {
+    pub const MAX_SIZE: usize =
+        (4 + MAX_TRAVEL_RULE_NAME_LEN)
+        + (4 + MAX_TRAVEL_RULE_ACCOUNT_LEN)
+        + (4 + MAX_JURISDICTION_LEN)
+        + (4 + MAX_TRAVEL_RULE_NAME_LEN)
+        + (4 + MAX_TRAVEL_RULE_ACCOUNT_LEN)
+        + (4 + MAX_JURISDICTION_LEN)
+        + (4 + MAX_TRANSFER_PURPOSE_LEN);
+}
+
+/// Per-escrow compliance data — stored in a separate PDA linked to the escrow.
+#[account]
+#[derive(Debug)]
+pub struct EscrowCompliance {
+    pub escrow_address: Pubkey,
+    pub requires_kyc: bool,
+    pub travel_rule: Option<TravelRuleData>,
+}
+
+impl EscrowCompliance {
+    pub const SPACE: usize = 8
+        + 32 // escrow_address
+        + 1  // requires_kyc
+        + 1 + TravelRuleData::MAX_SIZE; // Option<TravelRuleData>
 }

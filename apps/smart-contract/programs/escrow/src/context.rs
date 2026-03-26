@@ -2,7 +2,10 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::{Token, TokenAccount};
 
 use crate::errors::EscrowError;
-use crate::state::{EscrowData, MultiReleaseEscrowData};
+use crate::state::{
+    EscrowData, MultiReleaseEscrowData,
+    ComplianceRegistry, AddressVerification, EscrowCompliance,
+};
 
 /// ESCROW CONTEXTS
 
@@ -367,4 +370,120 @@ pub struct WithdrawRemainingFunds<'info> {
     pub approver_token_account: Account<'info, TokenAccount>,
 
     pub token_program: Program<'info, Token>,
+}
+
+// ============================
+// Compliance Contexts
+// ============================
+
+#[derive(Accounts)]
+pub struct InitializeComplianceRegistry<'info> {
+    #[account(
+        init,
+        payer = authority,
+        space = ComplianceRegistry::SPACE,
+        seeds = [b"compliance_registry"],
+        bump
+    )]
+    pub registry: Account<'info, ComplianceRegistry>,
+
+    #[account(mut)]
+    pub authority: Signer<'info>,
+
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct VerifyAddress<'info> {
+    #[account(mut)]
+    pub authority: Signer<'info>,
+
+    #[account(
+        seeds = [b"compliance_registry"],
+        bump,
+        constraint = registry.authority == authority.key() @ EscrowError::OnlyComplianceAuthority
+    )]
+    pub registry: Account<'info, ComplianceRegistry>,
+
+    #[account(
+        init,
+        payer = authority,
+        space = AddressVerification::SPACE,
+        seeds = [b"kyc", address.key().as_ref()],
+        bump
+    )]
+    pub verification: Account<'info, AddressVerification>,
+
+    /// CHECK: The address being verified. Does not need to sign.
+    pub address: AccountInfo<'info>,
+
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct RevokeVerification<'info> {
+    #[account(mut)]
+    pub authority: Signer<'info>,
+
+    #[account(
+        seeds = [b"compliance_registry"],
+        bump,
+        constraint = registry.authority == authority.key() @ EscrowError::OnlyComplianceAuthority
+    )]
+    pub registry: Account<'info, ComplianceRegistry>,
+
+    #[account(
+        mut,
+        seeds = [b"kyc", verification.address.as_ref()],
+        bump,
+        close = authority
+    )]
+    pub verification: Account<'info, AddressVerification>,
+}
+
+#[derive(Accounts)]
+pub struct SetEscrowCompliance<'info> {
+    #[account(mut)]
+    pub authority: Signer<'info>,
+
+    #[account(
+        seeds = [b"compliance_registry"],
+        bump,
+        constraint = registry.authority == authority.key() @ EscrowError::OnlyComplianceAuthority
+    )]
+    pub registry: Account<'info, ComplianceRegistry>,
+
+    #[account(
+        init,
+        payer = authority,
+        space = EscrowCompliance::SPACE,
+        seeds = [b"escrow_compliance", escrow_address.key().as_ref()],
+        bump
+    )]
+    pub compliance: Account<'info, EscrowCompliance>,
+
+    /// CHECK: The escrow account address (single or multi-release).
+    pub escrow_address: AccountInfo<'info>,
+
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct SetTravelRuleData<'info> {
+    #[account(mut)]
+    pub authority: Signer<'info>,
+
+    #[account(
+        seeds = [b"compliance_registry"],
+        bump,
+        constraint = registry.authority == authority.key() @ EscrowError::OnlyComplianceAuthority
+    )]
+    pub registry: Account<'info, ComplianceRegistry>,
+
+    #[account(
+        mut,
+        seeds = [b"escrow_compliance", compliance.escrow_address.as_ref()],
+        bump
+    )]
+    pub compliance: Account<'info, EscrowCompliance>,
 }
