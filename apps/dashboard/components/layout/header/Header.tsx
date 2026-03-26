@@ -57,7 +57,7 @@ const Header = () => {
 						<ThemeToggle />
 
 						<Button variant="outline" onClick={handleConnect}>
-							<LogIn /> Connect
+							<LogIn /> Connect Wallet
 						</Button>
 					</div>
 				)}
