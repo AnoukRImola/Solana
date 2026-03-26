@@ -91,9 +91,9 @@ export class HelperController {
 	async setTrustline(
 		@Body() setTrustlineDto: SetTrustlineDto,
 	): Promise<ApiResponse> {
-		const { sourceSecretKey } = setTrustlineDto
+		const { walletAddress } = setTrustlineDto
 		try {
-			return await this.helperService.establishTrustline(sourceSecretKey)
+			return await this.helperService.establishTrustline(walletAddress)
 		} catch (error) {
 			if (error instanceof HttpException) throw error
 			throw new HttpException(

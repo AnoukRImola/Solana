@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common'
 import { BN } from '@coral-xyz/anchor'
-import { PublicKey, SystemProgram, Transaction } from '@solana/web3.js'
+import { PublicKey, Transaction } from '@solana/web3.js'
 import {
 	getConnection,
 	getProgram,
@@ -30,11 +30,10 @@ export class ComplianceService {
 
 			const ix = await program.methods
 				.initializeComplianceRegistry(new BN(dto.travelRuleThreshold))
-				.accounts({
+				.accountsPartial({
 					registry: registryPda,
 					authority: signerPubkey,
-					systemProgram: SystemProgram.programId,
-				})
+					})
 				.instruction()
 
 			const { blockhash } = await connection.getLatestBlockhash()
@@ -71,13 +70,12 @@ export class ComplianceService {
 
 			const ix = await program.methods
 				.verifyAddress(dto.kycProvider, dto.jurisdiction, dto.riskScore)
-				.accounts({
+				.accountsPartial({
 					authority: signerPubkey,
 					registry: registryPda,
 					verification: verificationPda,
 					address: addressPubkey,
-					systemProgram: SystemProgram.programId,
-				})
+					})
 				.instruction()
 
 			const { blockhash } = await connection.getLatestBlockhash()
@@ -114,7 +112,7 @@ export class ComplianceService {
 
 			const ix = await program.methods
 				.revokeVerification()
-				.accounts({
+				.accountsPartial({
 					authority: signerPubkey,
 					registry: registryPda,
 					verification: verificationPda,
@@ -157,13 +155,12 @@ export class ComplianceService {
 
 			const ix = await program.methods
 				.setEscrowCompliance(dto.requiresKyc)
-				.accounts({
+				.accountsPartial({
 					authority: signerPubkey,
 					registry: registryPda,
 					compliance: compliancePda,
 					escrowAddress: escrowAddressPubkey,
-					systemProgram: SystemProgram.programId,
-				})
+					})
 				.instruction()
 
 			const { blockhash } = await connection.getLatestBlockhash()
@@ -210,7 +207,7 @@ export class ComplianceService {
 
 			const ix = await program.methods
 				.setTravelRuleData(travelRule)
-				.accounts({
+				.accountsPartial({
 					authority: signerPubkey,
 					registry: registryPda,
 					compliance: compliancePda,

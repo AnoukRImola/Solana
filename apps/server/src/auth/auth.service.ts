@@ -32,7 +32,7 @@ export class AuthService {
 			return []
 		}
 
-		const documents = []
+		const documents: { id: string; [key: string]: any }[] = []
 		snapshot.forEach((doc) => {
 			documents.push({ id: doc.id, ...doc.data() })
 		})
@@ -81,11 +81,12 @@ export class AuthService {
 		if (user.data() === undefined)
 			throw new UnauthorizedException('User are not registered')
 
-		console.log({ wallet: user.data().address })
+		const userData = user.data()!
+		console.log({ wallet: userData.address })
 
 		const data = {
-			...user.data(),
-			token: this.getJwtToken({ wallet: user.data().address }),
+			...userData,
+			token: this.getJwtToken({ wallet: userData.address }),
 		}
 
 		usersCollection.doc(wallet).update({

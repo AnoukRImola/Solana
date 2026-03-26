@@ -24,14 +24,21 @@ export class KycGuard implements CanActivate {
 			throw new ForbiddenException('No wallet address found in request')
 		}
 
-		const isVerified = await this.complianceService.isAddressVerified(wallet)
+		try {
+			const isVerified = await this.complianceService.isAddressVerified(wallet)
 
-		if (!isVerified) {
-			throw new ForbiddenException(
-				`Wallet ${wallet} has not passed KYC verification`,
-			)
+			if (!isVerified) {
+				throw new ForbiddenException(
+					`Wallet ${wallet} has not passed KYC verification`,
+				)
+			}
+
+			return true
+		} catch (error) {
+			if (error instanceof ForbiddenException) throw error
+			// If compliance service fails (e.g. RPC error), allow but log
+			console.error('KycGuard: Error checking KYC status, allowing request:', error.message)
+			return true
 		}
-
-		return true
 	}
 }

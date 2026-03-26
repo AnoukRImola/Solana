@@ -58,15 +58,13 @@ pub fn validate_escrow_property_change_conditions(
     contract_balance: i128,
     milestones: &[Milestone],
 ) -> Result<()> {
-    if !milestones.is_empty() && milestones.iter().any(|m| m.approved_flag) {
-        return Err(EscrowError::MilestoneApprovedCantChangeEscrowProperties.into());
-    }
-
     if platform_address != &escrow.roles.platform_address {
         return Err(EscrowError::OnlyPlatformAddressExecuteThisFunction.into());
     }
 
-    if escrow.milestones.iter().any(|m| m.approved_flag) {
+    if (!milestones.is_empty() && milestones.iter().any(|m| m.approved_flag))
+        || escrow.milestones.iter().any(|m| m.approved_flag)
+    {
         return Err(EscrowError::MilestoneApprovedCantChangeEscrowProperties.into());
     }
 

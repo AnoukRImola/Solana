@@ -45,7 +45,11 @@ pub struct FundEscrow<'info> {
     )]
     pub escrow_token_account: Account<'info, TokenAccount>,
 
-    #[account(mut)]
+    #[account(
+        mut,
+        token::mint = escrow_token_account.mint,
+        token::authority = signer
+    )]
     pub user_token_account: Account<'info, TokenAccount>,
 
     pub token_program: Program<'info, Token>,
@@ -232,7 +236,11 @@ pub struct FundMultiReleaseEscrow<'info> {
     )]
     pub escrow_token_account: Account<'info, TokenAccount>,
 
-    #[account(mut)]
+    #[account(
+        mut,
+        token::mint = escrow_token_account.mint,
+        token::authority = signer
+    )]
     pub user_token_account: Account<'info, TokenAccount>,
 
     pub token_program: Program<'info, Token>,

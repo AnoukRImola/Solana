@@ -141,7 +141,7 @@ pub fn fund_escrow_handler(ctx: Context<FundEscrow>, amount: u64) -> Result<()> 
         ctx.accounts.token_program.to_account_info(),
     )?;
 
-    escrow.balance = ctx.accounts.escrow_token_account.amount + amount;
+    escrow.balance = contract_balance + amount;
 
     emit!(EscrowFunded {
         escrow_id: escrow.engagement_id.clone(),

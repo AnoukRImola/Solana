@@ -26,9 +26,10 @@ export class SendTransactionDto {
 }
 
 export class SetTrustlineDto {
-	@IsNotEmpty({ message: 'The sourceSecretKey must not be empty' })
+	@IsNotEmpty({ message: 'The wallet address must not be empty' })
 	@IsString()
-	sourceSecretKey: string
+	@IsAddressValid()
+	walletAddress: string
 }
 
 export class GetMultiSigEscrowBalanceDto {

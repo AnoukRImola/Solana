@@ -1,5 +1,5 @@
 export const apiConfig = {
-	jwtSecret: process.env.JWT_SECRET || 'default_jwt_secret',
+	jwtSecret: process.env.JWT_SECRET || (() => { throw new Error('JWT_SECRET environment variable is required') })(),
 	solanaServerURL:
 		process.env.SOLANA_SERVER_URL || 'https://api.devnet.solana.com',
 	trustlessContractId: process.env.TRUSTLESS_CONTRACT_ID || '',

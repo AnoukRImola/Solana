@@ -3,7 +3,7 @@ use anchor_lang::prelude::*;
 use crate::{
     context::{ChangeMilestoneFlag, ChangeMilestoneStatus},
     errors::EscrowError,
-    milestone_validators::{
+    utils::milestone_validators::{
         validate_milestone_flag_change_conditions,
         validate_milestone_status_change_conditions,
     },

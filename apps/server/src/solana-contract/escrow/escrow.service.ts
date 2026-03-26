@@ -1,10 +1,7 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common'
 import { BN } from '@coral-xyz/anchor'
-import { PublicKey, SystemProgram, Transaction } from '@solana/web3.js'
-import {
-	getAssociatedTokenAddress,
-	TOKEN_PROGRAM_ID,
-} from '@solana/spl-token'
+import { PublicKey, Transaction } from '@solana/web3.js'
+import { getAssociatedTokenAddress } from '@solana/spl-token'
 import { apiConfig } from 'src/config/api.config'
 import {
 	getConnection,
@@ -58,13 +55,12 @@ export class EscrowService {
 
 			const ix = await program.methods
 				.fundEscrow(new BN(amount))
-				.accounts({
+				.accountsPartial({
 					signer: signerPubkey,
 					escrowAccount: escrowPda,
 					escrowTokenAccount,
 					userTokenAccount,
-					tokenProgram: TOKEN_PROGRAM_ID,
-				})
+					})
 				.instruction()
 
 			const { blockhash } = await connection.getLatestBlockhash()
@@ -127,15 +123,14 @@ export class EscrowService {
 
 			const ix = await program.methods
 				.releaseFunds()
-				.accounts({
+				.accountsPartial({
 					releaseSigner: releaseSignerPubkey,
 					escrowAccount: escrowPda,
 					escrowTokenAccount,
 					trustlessWorkAccount,
 					platformAccount,
 					receiverAccount,
-					tokenProgram: TOKEN_PROGRAM_ID,
-				})
+					})
 				.instruction()
 
 			const { blockhash } = await connection.getLatestBlockhash()
@@ -207,7 +202,7 @@ export class EscrowService {
 
 			const ix = await program.methods
 				.resolveDispute(new BN(approverFunds), new BN(receiverFunds))
-				.accounts({
+				.accountsPartial({
 					disputeResolver: disputeResolverPubkey,
 					escrowAccount: escrowPda,
 					escrowTokenAccount,
@@ -215,8 +210,7 @@ export class EscrowService {
 					platformAccount,
 					approverAccount,
 					serviceProviderAccount,
-					tokenProgram: TOKEN_PROGRAM_ID,
-				})
+					})
 				.instruction()
 
 			const { blockhash } = await connection.getLatestBlockhash()
@@ -266,7 +260,7 @@ export class EscrowService {
 					newStatus,
 					newEvidence || null,
 				)
-				.accounts({
+				.accountsPartial({
 					serviceProvider: serviceProviderPubkey,
 					escrowAccount: escrowPda,
 				})
@@ -319,7 +313,7 @@ export class EscrowService {
 
 			const ix = await program.methods
 				.changeMilestoneFlag(Number(milestoneIndex), newFlag)
-				.accounts({
+				.accountsPartial({
 					approver: approverPubkey,
 					escrowAccount: escrowPda,
 				})
@@ -369,7 +363,7 @@ export class EscrowService {
 
 			const ix = await program.methods
 				.changeDisputeFlag()
-				.accounts({
+				.accountsPartial({
 					signer: signerPubkey,
 					escrowAccount: escrowPda,
 				})
@@ -503,12 +497,11 @@ export class EscrowService {
 
 			const ix = await program.methods
 				.changeEscrowProperties(newData)
-				.accounts({
+				.accountsPartial({
 					platformSigner: signerPubkey,
 					escrowAccount: escrowPda,
 					escrowTokenAccount,
-					systemProgram: SystemProgram.programId,
-				})
+					})
 				.instruction()
 
 			const { blockhash } = await connection.getLatestBlockhash()
@@ -572,13 +565,12 @@ export class EscrowService {
 
 			const ix = await program.methods
 				.fundMultiReleaseEscrow(new BN(amount))
-				.accounts({
+				.accountsPartial({
 					signer: signerPubkey,
 					escrowAccount: escrowPda,
 					escrowTokenAccount,
 					userTokenAccount,
-					tokenProgram: TOKEN_PROGRAM_ID,
-				})
+					})
 				.instruction()
 
 			const { blockhash } = await connection.getLatestBlockhash()
@@ -628,7 +620,7 @@ export class EscrowService {
 					newStatus,
 					newEvidence || null,
 				)
-				.accounts({
+				.accountsPartial({
 					serviceProvider: serviceProviderPubkey,
 					escrowAccount: escrowPda,
 				})
@@ -671,7 +663,7 @@ export class EscrowService {
 
 			const ix = await program.methods
 				.approveMultiReleaseMilestone(Number(milestoneIndex), approved)
-				.accounts({
+				.accountsPartial({
 					approver: approverPubkey,
 					escrowAccount: escrowPda,
 				})
@@ -737,15 +729,14 @@ export class EscrowService {
 
 			const ix = await program.methods
 				.releaseMilestoneFunds(Number(milestoneIndex))
-				.accounts({
+				.accountsPartial({
 					releaseSigner: releaseSignerPubkey,
 					escrowAccount: escrowPda,
 					escrowTokenAccount,
 					trustlessWorkAccount,
 					platformAccount,
 					receiverAccount,
-					tokenProgram: TOKEN_PROGRAM_ID,
-				})
+					})
 				.instruction()
 
 			const { blockhash } = await connection.getLatestBlockhash()
@@ -784,7 +775,7 @@ export class EscrowService {
 
 			const ix = await program.methods
 				.disputeMilestone(Number(milestoneIndex))
-				.accounts({
+				.accountsPartial({
 					signer: signerPubkey,
 					escrowAccount: escrowPda,
 				})
@@ -860,7 +851,7 @@ export class EscrowService {
 					new BN(approverFunds),
 					new BN(receiverFunds),
 				)
-				.accounts({
+				.accountsPartial({
 					disputeResolver: disputeResolverPubkey,
 					escrowAccount: escrowPda,
 					escrowTokenAccount,
@@ -868,8 +859,7 @@ export class EscrowService {
 					platformAccount,
 					approverAccount,
 					receiverAccount,
-					tokenProgram: TOKEN_PROGRAM_ID,
-				})
+					})
 				.instruction()
 
 			const { blockhash } = await connection.getLatestBlockhash()
@@ -921,13 +911,12 @@ export class EscrowService {
 
 			const ix = await program.methods
 				.withdrawRemainingFunds()
-				.accounts({
+				.accountsPartial({
 					approver: approverPubkey,
 					escrowAccount: escrowPda,
 					escrowTokenAccount,
 					approverTokenAccount,
-					tokenProgram: TOKEN_PROGRAM_ID,
-				})
+					})
 				.instruction()
 
 			const { blockhash } = await connection.getLatestBlockhash()

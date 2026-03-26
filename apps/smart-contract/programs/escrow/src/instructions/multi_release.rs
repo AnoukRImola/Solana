@@ -216,7 +216,8 @@ pub fn release_milestone_funds_handler(
     )?;
 
     // Mark as released
-    let milestone_mut = escrow.milestones.get_mut(milestone_index as usize).unwrap();
+    let milestone_mut = escrow.milestones.get_mut(milestone_index as usize)
+        .ok_or(EscrowError::InvalidMileStoneIndex)?;
     milestone_mut.flags.released = true;
 
     emit!(MilestoneFundsReleased {
@@ -355,7 +356,8 @@ pub fn resolve_multi_release_milestone_dispute_handler(
         )?;
     }
 
-    let milestone_mut = escrow.milestones.get_mut(milestone_index as usize).unwrap();
+    let milestone_mut = escrow.milestones.get_mut(milestone_index as usize)
+        .ok_or(EscrowError::InvalidMileStoneIndex)?;
     milestone_mut.flags.resolved = true;
     milestone_mut.flags.disputed = false;
 

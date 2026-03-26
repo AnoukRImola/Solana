@@ -1,10 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common'
 import { BN } from '@coral-xyz/anchor'
-import {
-	Keypair,
-	PublicKey,
-	SystemProgram,
-} from '@solana/web3.js'
+import { PublicKey } from '@solana/web3.js'
 import {
 	getAssociatedTokenAddress,
 	createAssociatedTokenAccountInstruction,
@@ -86,11 +82,10 @@ export class DeployerService {
 
 			const initIx = await program.methods
 				.initializeEscrow(escrowData)
-				.accounts({
+				.accountsPartial({
 					escrowAccount: escrowPda,
 					initializer: signer,
-					systemProgram: SystemProgram.programId,
-				})
+					})
 				.instruction()
 
 			const { blockhash } = await connection.getLatestBlockhash()
@@ -188,11 +183,10 @@ export class DeployerService {
 
 			const initIx = await program.methods
 				.initializeMultiReleaseEscrow(escrowData)
-				.accounts({
+				.accountsPartial({
 					escrowAccount: escrowPda,
 					initializer: signer,
-					systemProgram: SystemProgram.programId,
-				})
+					})
 				.instruction()
 
 			const { blockhash } = await connection.getLatestBlockhash()

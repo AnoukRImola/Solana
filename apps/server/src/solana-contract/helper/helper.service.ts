@@ -4,19 +4,13 @@ import {
 	getAssociatedTokenAddress,
 } from '@solana/spl-token'
 import {
-	Commitment,
 	Connection,
-	ConnectionConfig,
-	Keypair,
 	PublicKey,
 } from '@solana/web3.js'
 import { apiConfig } from 'src/config/api.config'
 import { getConnection, getProgram } from 'src/config/constants/program.constant'
 import { ApiResponse } from 'src/interfaces/response.interface'
-import {
-	buildTransaction,
-	signAndSendTransaction,
-} from 'src/utils/transaction.utils'
+import { buildTransaction } from 'src/utils/transaction.utils'
 import { PendingWriteHandlerService } from '../queue/pending-write-handler.service'
 import { PendingWriteQueueService } from '../queue/pending-write-queue.service'
 
@@ -148,11 +142,9 @@ export class HelperService {
 		}
 	}
 
-	async establishTrustline(sourceSecretKey: string): Promise<ApiResponse> {
+	async establishTrustline(walletAddress: string): Promise<ApiResponse> {
 		try {
-			const secretKeyBuffer = Buffer.from(sourceSecretKey, 'base64')
-			const sourceKeypair = Keypair.fromSecretKey(secretKeyBuffer)
-			const ownerPublicKey = sourceKeypair.publicKey
+			const ownerPublicKey = new PublicKey(walletAddress)
 
 			const usdcMint = process.env.USDC_TOKEN_MINT || ''
 			const tokenMintAddress = new PublicKey(usdcMint)
@@ -185,21 +177,20 @@ export class HelperService {
 					),
 				],
 			})
-			const signatureResults = await signAndSendTransaction({
-				transaction,
-				signer: sourceKeypair,
-				connection: this.solanaServer,
-			})
+
+			const unsignedTx = transaction
+				.serialize({ requireAllSignatures: false })
+				.toString('base64')
 
 			return {
 				status: 'SUCCESS',
-				message: 'The USDC token account has been successfully created',
-				unsignedTransaction: signatureResults.signature,
+				message: 'Sign this transaction to create your USDC token account',
+				unsignedTransaction: unsignedTx,
 			}
 		} catch (error) {
-			console.error('Error establishing Solana token account:', error)
+			console.error('Error building trustline transaction:', error)
 
-			let errorMessage = 'Failed to establish token account in Solana'
+			let errorMessage = 'Failed to build token account transaction'
 			if (error.logs) {
 				errorMessage += ` Logs: ${error.logs.join(', ')}`
 			} else if (error.message) {
@@ -263,10 +254,13 @@ export class HelperService {
 
 		try {
 			await this.pendingWriteHandler.execute(pending.type, pending.payload)
-		} catch (err) {
-			console.error(`Error handling pending write:`, err)
-		} finally {
 			this.pendingWriteQueue.remove(queueKey)
+		} catch (err) {
+			console.error(
+				`Error handling pending write for key ${queueKey} (type: ${pending.type}). ` +
+				`Entry kept in queue for potential retry. TX: ${responseHash}`,
+				err,
+			)
 		}
 	}
 }
