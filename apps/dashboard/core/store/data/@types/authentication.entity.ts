@@ -1,6 +1,6 @@
 import type { User, UserPayload } from '~/@types/user.entity'
 
-export type WalletType = 'stellar' | 'solana'
+export type WalletType = 'solana'
 
 export interface AuthenticationGlobalStore {
 	address: string

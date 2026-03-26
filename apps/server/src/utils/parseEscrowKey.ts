@@ -1,17 +1,8 @@
-import * as StellarSDK from '@stellar/stellar-sdk'
-import { Milestone } from 'src/interfaces/milestone.interface'
 import { microUSDTToDecimal } from 'src/utils/parse.utils'
 
-function parseI128(val: any): number {
-	const { hi, lo } = val._value._attributes
-	const highPart = BigInt(hi.toString())
-	const lowPart = BigInt(lo.toString())
-	return Number((highPart << BigInt(64)) | lowPart)
-}
-
-function parseString(val: any): string {
-	return val._value.toString('utf8')
-}
+// TODO: PR5 — Rewrite escrow key parsing for Anchor account deserialization
+// The Stellar-based ScVal parsing has been removed.
+// Anchor provides automatic deserialization via program.account.escrowData.fetch()
 
 export function handleKey(
 	key: string,
@@ -19,96 +10,6 @@ export function handleKey(
 	parsed: Record<string, any>,
 	trustlineDecimals: number,
 ) {
-	switch (key) {
-		case 'amount':
-			if (val._arm === 'i128') {
-				parsed[key] = microUSDTToDecimal({
-					microToken: parseI128(val),
-					decimals: trustlineDecimals,
-				})
-			}
-			break
-		case 'platform_fee':
-		case 'receiver_memo':
-		case 'trustlineDecimals':
-			if (val._arm === 'i128') {
-				parsed[key] = parseI128(val)
-			}
-			break
-		case 'approver':
-		case 'receiver':
-		case 'service_provider':
-		case 'platform_address':
-		case 'release_signer':
-		case 'dispute_resolver':
-		case 'trustline':
-			if (val._arm === 'address') {
-				parsed[key] = StellarSDK.Address.fromScVal(val).toString()
-			}
-			break
-		case 'engagement_id':
-		case 'title':
-		case 'description':
-			if (val._arm === 'str') {
-				parsed[key] = parseString(val)
-			}
-			break
-		case 'dispute_flag':
-		case 'resolved_flag':
-		case 'release_flag':
-			if (val._arm === 'b') {
-				parsed[key] = val._value
-			}
-			break
-		case 'milestones':
-			if (val._arm === 'vec' && Array.isArray(val._value)) {
-				parsed.milestones = val._value.map((milestone: any) => {
-					const milestoneEntries = milestone._value
-					const milestoneParsed: Partial<Milestone> = {}
-
-					for (const entry of milestoneEntries as MilestoneEntry[]) {
-						const milestoneKey = entry._attributes.key._value.toString('utf8')
-						const milestoneVal = entry._attributes.val
-
-						if (milestoneKey === 'description' && milestoneVal._arm === 'str') {
-							milestoneParsed.description = parseString(milestoneVal)
-						} else if (
-							milestoneKey === 'status' &&
-							milestoneVal._arm === 'str'
-						) {
-							milestoneParsed.status = parseString(milestoneVal)
-						} else if (
-							milestoneKey === 'approved_flag' &&
-							milestoneVal._arm === 'b'
-						) {
-							milestoneParsed.approved_flag = Boolean(milestoneVal._value)
-						} else if (
-							milestoneKey === 'evidence' &&
-							milestoneVal._arm === 'str'
-						) {
-							milestoneParsed.evidence = parseString(milestoneVal) ?? ''
-						}
-					}
-
-					return milestoneParsed as Milestone
-				})
-			}
-			break
-		default:
-			console.warn(`🔹 Unexpected key: ${key}`)
-	}
-}
-
-interface MilestoneEntry {
-	_attributes: {
-		key: {
-			_value: {
-				toString(encoding: string): string
-			}
-		}
-		val: {
-			_arm: string
-			_value: string | boolean
-		}
-	}
+	// Placeholder — will be replaced by Anchor IDL-based deserialization in PR5
+	console.warn(`handleKey called for key "${key}" but Stellar parsing has been removed.`)
 }

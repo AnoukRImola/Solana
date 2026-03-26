@@ -1,25 +1,24 @@
 import axios from 'axios'
 import type { DistributeEscrowEarningsEscrowPayload } from '~/@types/escrow.entity'
-import { kit } from '~/components/modules/auth/wallet/constants/wallet-kit.constant'
 import http from '~/core/config/axios/http'
-import { signTransaction } from '~/lib/stellar-wallet-kit'
+
+// TODO: PR7 — Sign with Solana wallet adapter instead of Stellar kit
 
 export const distributeEscrowEarnings = async (
 	payload: DistributeEscrowEarningsEscrowPayload,
 ) => {
 	try {
-		const { address } = await kit.getAddress()
-
 		const response = await http.post(
 			'/escrow/distribute-escrow-earnings',
 			payload,
 		)
 		const { unsignedTransaction } = response.data
 
-		const signedTxXdr = await signTransaction({ unsignedTransaction, address })
+		// TODO: PR7 — Replace with Solana wallet signTransaction
+		const signedTx = unsignedTransaction
 
 		const tx = await http.post('/helper/send-transaction', {
-			signedXdr: signedTxXdr,
+			signedXdr: signedTx,
 		})
 
 		const { data } = tx

@@ -32,8 +32,6 @@
 		"@project-serum/borsh": "^0.2.5",
 		"@solana/spl-token": "^0.4.13",
 		"@solana/web3.js": "^1.98.2",
-		"@stellar/freighter-api": "^3.0.0",
-		"@stellar/stellar-sdk": "^12.3.0",
 		"@packages/allbridge": "workspace:*",
 		"@types/passport-jwt": "^4.0.1",
 		"bn.js": "^5.2.2",
@@ -48,7 +46,6 @@
 		"passport-jwt": "^4.0.1",
 		"reflect-metadata": "^0.2.0",
 		"rxjs": "^7.8.1",
-		"stellar-sdk": "^12.2.0",
 		"web3": "^4.16.0"
 	},
 	"devDependencies": {

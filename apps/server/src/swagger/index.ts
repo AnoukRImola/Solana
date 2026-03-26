@@ -40,7 +40,7 @@ export const ApiInvokeContract = () => {
 		ApiBody({ type: InvokeContract, examples: InvokeContractDefaultValue }),
 		ApiCreatedResponse({
 			description:
-				'This endpoint returns an unsigned transaction in XDR format. This XDR is then used to sign the transaction using the “/helper/send-transaction” endpoint.',
+				'This endpoint returns an unsigned transaction in base64 format. This transaction is then signed by the client wallet and sent using the "/helper/send-transaction" endpoint.',
 		}),
 		ApiBadRequestResponse({
 			description: 'Bad request',
@@ -74,7 +74,7 @@ export const ApiFundEscrow = () => {
 		ApiBody({ type: FundEscrow, examples: FundEscrowDefaultValue }),
 		ApiCreatedResponse({
 			description:
-				'This endpoint returns an unsigned transaction in XDR format. This XDR is then used to sign the transaction using the “/helper/send-transaction” endpoint.',
+				'This endpoint returns an unsigned transaction in base64 format. This transaction is then signed by the client wallet and sent using the "/helper/send-transaction" endpoint.',
 		}),
 		ApiBadRequestResponse({
 			description: 'Bad request',
@@ -108,7 +108,7 @@ export const ApiDistributeEscrowEarnings = () => {
 		}),
 		ApiCreatedResponse({
 			description:
-				'This endpoint returns an unsigned transaction in XDR format. This XDR is then used to sign the transaction using the “/helper/send-transaction” endpoint.',
+				'This endpoint returns an unsigned transaction in base64 format. This transaction is then signed by the client wallet and sent using the "/helper/send-transaction" endpoint.',
 		}),
 		ApiBadRequestResponse({
 			description: 'Bad request',
@@ -142,7 +142,7 @@ export const ApiResolvingDisputesEscrow = () => {
 		}),
 		ApiCreatedResponse({
 			description:
-				'This endpoint returns an unsigned transaction in XDR format. This XDR is then used to sign the transaction using the “/helper/send-transaction” endpoint.',
+				'This endpoint returns an unsigned transaction in base64 format. This transaction is then signed by the client wallet and sent using the "/helper/send-transaction" endpoint.',
 		}),
 		ApiBadRequestResponse({
 			description: 'Bad request',
@@ -176,7 +176,7 @@ export const ApiChangeMilestoneFlagKey = () => {
 		}),
 		ApiCreatedResponse({
 			description:
-				'This endpoint returns an unsigned transaction in XDR format. This XDR is then used to sign the transaction using the “/helper/send-transaction” endpoint.',
+				'This endpoint returns an unsigned transaction in base64 format. This transaction is then signed by the client wallet and sent using the "/helper/send-transaction" endpoint.',
 		}),
 		ApiBadRequestResponse({
 			description: 'Bad request',
@@ -210,7 +210,7 @@ export const ApiChangeDisputeFlagKey = () => {
 		}),
 		ApiCreatedResponse({
 			description:
-				'This endpoint returns an unsigned transaction in XDR format. This XDR is then used to sign the transaction using the “/helper/send-transaction” endpoint.',
+				'This endpoint returns an unsigned transaction in base64 format. This transaction is then signed by the client wallet and sent using the "/helper/send-transaction" endpoint.',
 		}),
 		ApiBadRequestResponse({
 			description: 'Bad request',
@@ -244,7 +244,7 @@ export const ApiChangeMilestoneStatusKey = () => {
 		}),
 		ApiCreatedResponse({
 			description:
-				'This endpoint returns an unsigned transaction in XDR format. This XDR is then used to sign the transaction using the “/helper/send-transaction” endpoint.',
+				'This endpoint returns an unsigned transaction in base64 format. This transaction is then signed by the client wallet and sent using the "/helper/send-transaction" endpoint.',
 		}),
 		ApiBadRequestResponse({
 			description: 'Bad request',
@@ -283,7 +283,7 @@ export const ApiGetEscrowByEngagementIdEscrow = () => {
 			name: 'signer',
 			required: true,
 			description: 'Address of the user signing the contract transaction',
-			example: 'GSIGN...XYZ',
+			example: 'So1an4...XYZ',
 			type: String,
 		}),
 		ApiResponse({
@@ -323,7 +323,7 @@ export const ApiUpdateEscrowByContractId = () => {
 		ApiResponse({
 			status: 200,
 			description:
-				'This endpoint returns an unsigned transaction in XDR format. This XDR is then used to sign the transaction using the “/helper/send-transaction” endpoint.',
+				'This endpoint returns an unsigned transaction in base64 format. This transaction is then signed by the client wallet and sent using the "/helper/send-transaction" endpoint.',
 		}),
 		ApiBadRequestResponse({
 			description: 'Bad request',
@@ -361,7 +361,7 @@ export const ApiSendTransaction = () => {
 		ApiResponse({
 			status: 200,
 			description:
-				'The transaction has been successfully sent to the Stellar network',
+				'The transaction has been successfully sent to the Solana network',
 		}),
 		ApiBadRequestResponse({
 			description: 'Bad request',
@@ -440,7 +440,7 @@ export const ApiGetMultiSigEscrowBalance = () => {
 		ApiResponse({
 			status: 200,
 			description:
-				'The transaction has been successfully sent to the Stellar network',
+				'The transaction has been successfully sent to the Solana network',
 		}),
 		ApiBadRequestResponse({
 			description: 'Bad request',

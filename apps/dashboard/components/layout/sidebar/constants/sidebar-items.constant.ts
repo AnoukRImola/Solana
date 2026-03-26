@@ -66,8 +66,8 @@ export const ItemsSidebar = {
 							isExternal: true,
 						},
 						{
-							title: 'Stellar Expert',
-							url: 'https://stellar.expert/explorer/testnet',
+							title: 'Solana Explorer',
+							url: 'https://explorer.solana.com/?cluster=devnet',
 							isExternal: true,
 						},
 						{

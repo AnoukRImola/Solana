@@ -57,8 +57,7 @@ const HeaderWithoutAuth: React.FC = () => {
 							</DropdownMenuItem>
 							<DropdownMenuItem onClick={handleDisconnect}>
 								<LogOut className="mr-2 h-4 w-4" />
-								Disconnect {walletType === 'solana' ? 'Solana' : 'Stellar'}{' '}
-								Wallet
+								Disconnect Wallet
 							</DropdownMenuItem>
 						</DropdownMenuContent>
 					</DropdownMenu>

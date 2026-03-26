@@ -20,7 +20,6 @@ import {
   ApiChangeDisputeFlagKey,
   ApiChangeMilestoneFlagKey,
   ApiChangeMilestoneStatusKey,
-  ApiDistributeEscrowEarnings,
   ApiFundEscrow,
   ApiGetEscrowByEngagementIdEscrow,
   ApiResolvingDisputesEscrow,
@@ -30,7 +29,6 @@ import {
   ChangeDisputeFlagDto,
   ChangeMilestoneFlagDto,
   ChangeMilestoneStatusDto,
-  DistributeEscrowEarningsDto,
   EscrowDisputeResolutionDto,
   EscrowOperationWithSignerDto,
   GetEscrowByEngagementIdDto,
@@ -76,66 +74,19 @@ export class EscrowController {
     }
   }
 
-  @Post('send-funds-with-memo')
+  @Post('release-funds')
   @UseGuards(AuthGuard())
   @ApiBearerAuth('jwt-auth')
-  async sendFundsWithMemo(
-    @Body() contractId: string,
-    @Body() signer: string,
+  async releaseFunds(
+    @Body() body: { contractId: string; releaseSigner: string },
   ): Promise<ApiResponse> {
+    const { contractId, releaseSigner } = body;
     try {
-      const result = await this.escrowService.sendFundsWithMemo(
-        contractId,
-        signer,
-      );
-      return result;
+      return await this.escrowService.releaseFunds(contractId, releaseSigner);
     } catch (error) {
-      if (error instanceof Error && error.message) {
-        throw new HttpException(
-          { status: HttpStatus.BAD_REQUEST, message: error.message },
-          HttpStatus.BAD_REQUEST,
-        );
-      }
-
+      if (error instanceof HttpException) throw error;
       throw new HttpException(
-        {
-          status: HttpStatus.INTERNAL_SERVER_ERROR,
-          message: 'An unexpected error occurred',
-        },
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
-  @Post('distribute-escrow-earnings')
-  @ApiDistributeEscrowEarnings()
-  @UseGuards(AuthGuard())
-  @ApiBearerAuth('jwt-auth')
-  async distributeEscrowEarnings(
-    @Body()
-    escrowOperationWithServiceProviderDto: DistributeEscrowEarningsDto,
-  ): Promise<ApiResponse> {
-    const { contractId, releaseSigner } = escrowOperationWithServiceProviderDto;
-    try {
-      const result = await this.escrowService.distributeEscrowEarnings(
-        contractId,
-        releaseSigner,
-      );
-      return result;
-    } catch (error) {
-      console.log({ error });
-      if (error instanceof Error && error.message) {
-        throw new HttpException(
-          { status: HttpStatus.BAD_REQUEST, message: error.message },
-          HttpStatus.BAD_REQUEST,
-        );
-      }
-
-      throw new HttpException(
-        {
-          status: HttpStatus.INTERNAL_SERVER_ERROR,
-          message: 'An unexpected error occurred',
-        },
+        { status: HttpStatus.INTERNAL_SERVER_ERROR, message: 'An unexpected error occurred' },
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
@@ -151,7 +102,7 @@ export class EscrowController {
     const { contractId, disputeResolver, approverFunds, receiverFunds } =
       escrowDisputeResolutionDto;
     try {
-      const result = await this.escrowService.resolvingDisputes(
+      const result = await this.escrowService.resolveDispute(
         contractId,
         disputeResolver,
         approverFunds,
@@ -159,18 +110,9 @@ export class EscrowController {
       );
       return result;
     } catch (error) {
-      if (error instanceof Error && error.message) {
-        throw new HttpException(
-          { status: HttpStatus.BAD_REQUEST, message: error.message },
-          HttpStatus.BAD_REQUEST,
-        );
-      }
-
+      if (error instanceof HttpException) throw error;
       throw new HttpException(
-        {
-          status: HttpStatus.INTERNAL_SERVER_ERROR,
-          message: 'An unexpected error occurred',
-        },
+        { status: HttpStatus.INTERNAL_SERVER_ERROR, message: 'An unexpected error occurred' },
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
@@ -186,7 +128,7 @@ export class EscrowController {
     const { contractId, milestoneIndex, newFlag, approver } =
       changeMilestoneFlagDto;
     try {
-      const result = await this.escrowService.changeMilestonesFlag(
+      const result = await this.escrowService.changeMilestoneFlag(
         contractId,
         milestoneIndex,
         newFlag,
@@ -194,18 +136,9 @@ export class EscrowController {
       );
       return result;
     } catch (error) {
-      if (error instanceof Error && error.message) {
-        throw new HttpException(
-          { status: HttpStatus.BAD_REQUEST, message: error.message },
-          HttpStatus.BAD_REQUEST,
-        );
-      }
-
+      if (error instanceof HttpException) throw error;
       throw new HttpException(
-        {
-          status: HttpStatus.INTERNAL_SERVER_ERROR,
-          message: 'An unexpected error occurred',
-        },
+        { status: HttpStatus.INTERNAL_SERVER_ERROR, message: 'An unexpected error occurred' },
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
@@ -226,7 +159,7 @@ export class EscrowController {
       serviceProvider,
     } = changeMilestoneStatusDto;
     try {
-      const result = await this.escrowService.changeMilestonesStatus(
+      const result = await this.escrowService.changeMilestoneStatus(
         contractId,
         milestoneIndex,
         newStatus,
@@ -235,18 +168,9 @@ export class EscrowController {
       );
       return result;
     } catch (error) {
-      if (error instanceof Error && error.message) {
-        throw new HttpException(
-          { status: HttpStatus.BAD_REQUEST, message: error.message },
-          HttpStatus.BAD_REQUEST,
-        );
-      }
-
+      if (error instanceof HttpException) throw error;
       throw new HttpException(
-        {
-          status: HttpStatus.INTERNAL_SERVER_ERROR,
-          message: 'An unexpected error occurred',
-        },
+        { status: HttpStatus.INTERNAL_SERVER_ERROR, message: 'An unexpected error occurred' },
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
@@ -267,18 +191,9 @@ export class EscrowController {
       );
       return result;
     } catch (error) {
-      if (error instanceof Error && error.message) {
-        throw new HttpException(
-          { status: HttpStatus.BAD_REQUEST, message: error.message },
-          HttpStatus.BAD_REQUEST,
-        );
-      }
-
+      if (error instanceof HttpException) throw error;
       throw new HttpException(
-        {
-          status: HttpStatus.INTERNAL_SERVER_ERROR,
-          message: 'An unexpected error occurred',
-        },
+        { status: HttpStatus.INTERNAL_SERVER_ERROR, message: 'An unexpected error occurred' },
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
@@ -300,18 +215,9 @@ export class EscrowController {
       );
       return result;
     } catch (error) {
-      if (error instanceof Error && error.message) {
-        throw new HttpException(
-          { status: HttpStatus.BAD_REQUEST, message: error.message },
-          HttpStatus.BAD_REQUEST,
-        );
-      }
-
+      if (error instanceof HttpException) throw error;
       throw new HttpException(
-        {
-          status: HttpStatus.INTERNAL_SERVER_ERROR,
-          message: 'An unexpected error occurred',
-        },
+        { status: HttpStatus.INTERNAL_SERVER_ERROR, message: 'An unexpected error occurred' },
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
@@ -321,7 +227,7 @@ export class EscrowController {
   @ApiGetEscrowByEngagementIdEscrow()
   @UseGuards(AuthGuard())
   @ApiBearerAuth('jwt-auth')
-  async getEscrowByEngagementId(
+  async getEscrowByContractId(
     @Query() getEscrowByEngagementIdDto: GetEscrowByEngagementIdDto,
   ): Promise<EscrowCamelCaseResponse | ApiResponse> {
     const { signer, contractId } = getEscrowByEngagementIdDto;
@@ -332,18 +238,9 @@ export class EscrowController {
       );
       return escrow;
     } catch (error) {
-      if (error instanceof Error && error.message) {
-        throw new HttpException(
-          { status: HttpStatus.BAD_REQUEST, message: error.message },
-          HttpStatus.BAD_REQUEST,
-        );
-      }
-
+      if (error instanceof HttpException) throw error;
       throw new HttpException(
-        {
-          status: HttpStatus.INTERNAL_SERVER_ERROR,
-          message: 'An unexpected error occurred',
-        },
+        { status: HttpStatus.INTERNAL_SERVER_ERROR, message: 'An unexpected error occurred' },
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

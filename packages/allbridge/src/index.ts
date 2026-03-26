@@ -8,7 +8,6 @@ import {
 	type NodeRpcUrls,
 	type RawBridgeSolanaTransaction,
 	type RawEvmTransaction,
-	type RawSorobanTransaction,
 	type RawTronTransaction,
 	type SendParams,
 	type TokenWithChainDetails,
@@ -21,14 +20,10 @@ import type { SolanaConfig } from './types'
 const SDK_NODE_URLS: NodeRpcUrls = {
 	[ChainSymbol.SOL]: 'https://api.mainnet-beta.solana.com',
 	[ChainSymbol.TRX]: 'https://tron-rpc.publicnode.com',
-	[ChainSymbol.SRB]: 'https://rpc.ankr.com/stellar_soroban',
-	[ChainSymbol.STLR]: 'https://horizon.stellar.org',
 }
 const ESCROW_USDC_ADDRESSES = {
 	[ChainSymbol.SOL]: 'GDW2...', // Replace with actual USDC address
 	[ChainSymbol.TRX]: 'GDW2...', // Replace with actual USDC address
-	[ChainSymbol.SRB]: 'GDW2...', // Replace with actual USDC address
-	[ChainSymbol.STLR]: 'GDW2...', // Replace with actual USDC address
 }
 
 class AllbridgeService {
@@ -37,7 +32,6 @@ class AllbridgeService {
 	private readonly solanaConfig: SolanaConfig
 
 	constructor() {
-		// We may want to move these to config/env
 		this.solanaConnection = new Connection(
 			SDK_NODE_URLS[ChainSymbol.SOL],
 			'confirmed',
@@ -96,15 +90,6 @@ class AllbridgeService {
 		)) as RawBridgeSolanaTransaction
 	}
 
-	getRawTransactionForStellar = async (
-		params: SendParams,
-	): Promise<RawSorobanTransaction> => {
-		return (await this.sdk.bridge.rawTxBuilder.send(
-			params,
-		)) as RawSorobanTransaction
-	}
-
-	// Swap any supported token to USDC on Solana
 	async swapToUSDC({
 		fromToken,
 		amount,
@@ -114,11 +99,10 @@ class AllbridgeService {
 		fromToken: string
 		amount: string
 		userAddress: string
-		walletType: 'evm' | 'solana' | 'stellar' | 'tron'
+		walletType: 'evm' | 'solana' | 'tron'
 	}): Promise<{
 		txHash: string
 	}> {
-		// 1. Find token info for fromToken and USDC
 		const tokens = await this.sdk.tokens('swap')
 		const sourceToken = tokens.find((t) => t.symbol === fromToken)
 		const usdcToken = tokens.find((t) => t.symbol === 'USDC')
@@ -126,7 +110,7 @@ class AllbridgeService {
 		if (!sourceToken || !usdcToken) {
 			throw new Error('Token not supported on Solana')
 		}
-		// 2. Check bridge allowance
+
 		const allowance = await this.sdk.bridge.checkAllowance({
 			amount: amount,
 			token: sourceToken,
@@ -136,21 +120,17 @@ class AllbridgeService {
 		if (!allowance) {
 			throw new Error('No allowance available for this swap')
 		}
-		// 3. Prepare and send swap transaction
+
 		const sendParams: SendParams = {
 			amount,
 			fromAccountAddress: userAddress,
-			toAccountAddress: ESCROW_USDC_ADDRESSES[walletType], // Escrow system will receive USDC
+			toAccountAddress: ESCROW_USDC_ADDRESSES[walletType],
 			sourceToken,
 			destinationToken: usdcToken,
 			messenger: Messenger.ALLBRIDGE,
 		}
 
-		let tx:
-			| RawBridgeSolanaTransaction
-			| RawEvmTransaction
-			| RawSorobanTransaction
-			| RawTronTransaction = null
+		let tx: RawBridgeSolanaTransaction | RawEvmTransaction | RawTronTransaction = null
 
 		switch (walletType) {
 			case 'evm': {
@@ -160,10 +140,6 @@ class AllbridgeService {
 					),
 				)
 				tx = await this.getRawTransactionForEvm(sendParams, web3)
-				break
-			}
-			case 'stellar': {
-				tx = await this.getRawTransactionForStellar(sendParams)
 				break
 			}
 			case 'solana':
@@ -182,7 +158,6 @@ class AllbridgeService {
 		}
 	}
 
-	// Swap USDC back to original token
 	async swapFromUSDC({
 		toToken,
 		amount,
@@ -194,7 +169,6 @@ class AllbridgeService {
 	}): Promise<{
 		txHash: string
 	}> {
-		// 1. Find token info for fromToken and USDC
 		const tokens = await this.sdk.tokens('swap')
 		const sourceToken = tokens.find((t) => t.symbol === 'USDC')
 		const destinationToken = tokens.find((t) => t.symbol === toToken)
@@ -202,7 +176,7 @@ class AllbridgeService {
 		if (!sourceToken || !destinationToken) {
 			throw new Error('Token not supported on Solana')
 		}
-		// 2. Check bridge allowance
+
 		const allowance = await this.sdk.bridge.checkAllowance({
 			amount: amount,
 			token: sourceToken,
@@ -212,10 +186,10 @@ class AllbridgeService {
 		if (!allowance) {
 			throw new Error('No allowance available for this swap')
 		}
-		// 3. Prepare and send swap transaction
+
 		const sendParams: SendParams = {
 			amount,
-			fromAccountAddress: ESCROW_USDC_ADDRESSES[ChainSymbol.SOL], // Escrow system will receive USDC
+			fromAccountAddress: ESCROW_USDC_ADDRESSES[ChainSymbol.SOL],
 			toAccountAddress: userAddress,
 			sourceToken,
 			destinationToken,

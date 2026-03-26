@@ -1,4 +1,4 @@
-// src/stellar-contract/queue/pending-write-handler.service.ts
+// src/solana-contract/queue/pending-write-handler.service.ts
 import { Injectable } from '@nestjs/common'
 import { FirebaseService } from 'src/firebase/firebase.service'
 import { Escrow } from 'src/interfaces/escrow.interface'

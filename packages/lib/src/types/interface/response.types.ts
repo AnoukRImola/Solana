@@ -1,8 +1,7 @@
-import type * as StellarSDK from '@stellar/stellar-sdk'
 import type { Milestone } from './milestone.types'
 
 export interface ApiResponse {
-	status: StellarSDK.rpc.Api.GetTransactionStatus
+	status: string
 	unsignedTransaction?: string
 	unsignedConversionTransaction?: string
 	message?: string
