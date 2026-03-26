@@ -12,11 +12,23 @@ tasks:
   server:
     cmds:
       - cd apps/server && bun run start:dev
+  # Run smart contract tests
+  test:
+    cmds:
+      - cd apps/smart-contract && anchor test
+  # Run server e2e tests
+  test-server:
+    cmds:
+      - cd apps/server && bun run test:e2e
   # Deploy the server app in PROD mode with Mau
   deploy-server:
     cmds:
       - cd apps/server && mau deploy
-  # Deploy the contract program to the blockchain and update code integrity
+  # Deploy the contract program to the blockchain
   deploy-contract:
     cmds:
-      - cd apps/smart-contract && ./build.sh
+      - cd apps/smart-contract && anchor deploy
+  # Build the contract program
+  build-contract:
+    cmds:
+      - cd apps/smart-contract && anchor build
