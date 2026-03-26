@@ -406,6 +406,105 @@ export class EscrowFirestoreService {
 		}
 	}
 
+	// ============================
+	// Indexation Queries
+	// ============================
+
+	async getEscrowsBySigner(
+		signer: string,
+		page = 1,
+		limit = 10,
+	): Promise<{
+		escrows: FirebaseFirestore.DocumentData[]
+		total: number
+		page: number
+		limit: number
+	}> {
+		const firestore = this.firebaseService.getFirestore()
+		const roleFields = [
+			'approver',
+			'serviceProvider',
+			'receiver',
+			'releaseSigner',
+			'disputeResolver',
+			'platformAddress',
+		]
+
+		const allDocs = new Map<string, FirebaseFirestore.DocumentData>()
+
+		for (const role of roleFields) {
+			const snapshot = await firestore
+				.collection('escrows')
+				.where(role, '==', signer)
+				.get()
+
+			for (const doc of snapshot.docs) {
+				if (!allDocs.has(doc.id)) {
+					allDocs.set(doc.id, { id: doc.id, ...doc.data() })
+				}
+			}
+		}
+
+		const allEscrows = Array.from(allDocs.values())
+		const total = allEscrows.length
+		const start = (page - 1) * limit
+		const escrows = allEscrows.slice(start, start + limit)
+
+		return { escrows, total, page, limit }
+	}
+
+	async getEscrowsByRole(
+		role: string,
+		wallet: string,
+		page = 1,
+		limit = 10,
+	): Promise<{
+		escrows: FirebaseFirestore.DocumentData[]
+		total: number
+		page: number
+		limit: number
+	}> {
+		const firestore = this.firebaseService.getFirestore()
+
+		const countSnapshot = await firestore
+			.collection('escrows')
+			.where(role, '==', wallet)
+			.count()
+			.get()
+		const total = countSnapshot.data().count
+
+		const snapshot = await firestore
+			.collection('escrows')
+			.where(role, '==', wallet)
+			.orderBy('createdAt', 'desc')
+			.offset((page - 1) * limit)
+			.limit(limit)
+			.get()
+
+		const escrows = snapshot.docs.map((doc) => ({
+			id: doc.id,
+			...doc.data(),
+		}))
+
+		return { escrows, total, page, limit }
+	}
+
+	async getEscrowsByEngagementId(
+		engagementId: string,
+	): Promise<FirebaseFirestore.DocumentData[]> {
+		const firestore = this.firebaseService.getFirestore()
+
+		const snapshot = await firestore
+			.collection('escrows')
+			.where('engagementId', '==', engagementId)
+			.get()
+
+		return snapshot.docs.map((doc) => ({
+			id: doc.id,
+			...doc.data(),
+		}))
+	}
+
 	private async getMilestones(contractId: string): Promise<{
 		docId: string
 		data: FirebaseFirestore.DocumentData
