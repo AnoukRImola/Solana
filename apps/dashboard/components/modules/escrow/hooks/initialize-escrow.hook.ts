@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import type { z } from 'zod'
 import type { Trustline } from '~/@types/trustline.entity'
+import { useWallet } from '~/components/modules/auth/wallet/hooks/wallet.hook'
 import { initializeEscrow } from '~/components/modules/escrow/services/initialize-escrow.service'
 import {
 	useGlobalAuthenticationStore,
@@ -18,6 +19,8 @@ import { GetFormSchema } from '../schema/initialize-escrow.schema'
 import { useEscrowUIBoundedStore } from '../store/ui'
 
 export const useInitializeEscrow = () => {
+	const { signTransaction } = useWallet()
+
 	const [showSelect, setShowSelect] = useState({
 		approver: false,
 		serviceProvider: false,
@@ -115,6 +118,10 @@ export const useInitializeEscrow = () => {
 		)
 
 		try {
+			if (!signTransaction) {
+				throw new Error('Wallet not connected. Please connect your wallet.')
+			}
+
 			const platformFeeDecimal = Number(payload.platformFee)
 			const data = await initializeEscrow(
 				{
@@ -125,6 +132,7 @@ export const useInitializeEscrow = () => {
 					receiverMemo: Number(payload.receiverMemo),
 				},
 				address,
+				signTransaction,
 			)
 
 			if (data.status === 'SUCCESS' || data.status === 201) {

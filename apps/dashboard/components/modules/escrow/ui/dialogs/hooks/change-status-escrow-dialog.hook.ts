@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import type { z } from 'zod'
 import type { ChangeMilestoneStatusPayload } from '~/@types/escrow.entity'
+import { useWallet } from '~/components/modules/auth/wallet/hooks/wallet.hook'
 import {
 	useGlobalAuthenticationStore,
 	useGlobalBoundedStore,
@@ -23,6 +24,7 @@ interface changeMilestoneStatusDialogHook {
 const useChangeMilestoneStatusDialogHook = ({
 	setIsCompleteMilestoneDialogOpen,
 }: changeMilestoneStatusDialogHook) => {
+	const { signTransaction } = useWallet()
 	const { address } = useGlobalAuthenticationStore()
 	const setIsChangingStatus = useEscrowUIBoundedStore(
 		(state) => state.setIsChangingStatus,
@@ -56,13 +58,15 @@ const useChangeMilestoneStatusDialogHook = ({
 	}: Pick<ChangeMilestoneStatusPayload, 'evidence'>) => {
 		setIsChangingStatus(true)
 		try {
+			if (!signTransaction) throw new Error('Wallet not connected')
+
 			const response = await changeMilestoneStatus({
 				contractId: selectedEscrow?.contractId,
 				milestoneIndex: milestoneIndex?.toString() || '0',
 				newStatus: 'completed',
 				serviceProvider: address,
 				newEvidence: evidence,
-			})
+			}, signTransaction)
 
 			if (response.status === 'SUCCESS') {
 				setIsChangingStatus(false)

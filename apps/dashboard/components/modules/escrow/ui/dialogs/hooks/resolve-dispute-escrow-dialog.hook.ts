@@ -7,6 +7,7 @@ import type { MouseEvent } from 'react'
 import { useForm } from 'react-hook-form'
 import type { z } from 'zod'
 import type { ResolveDisputePayload } from '~/@types/escrow.entity'
+import { useWallet } from '~/components/modules/auth/wallet/hooks/wallet.hook'
 import {
 	useGlobalAuthenticationStore,
 	useGlobalBoundedStore,
@@ -23,6 +24,7 @@ interface useResolveDisputeEscrowDialogProps {
 const useResolveDisputeEscrowDialog = ({
 	setIsResolveDisputeDialogOpen,
 }: useResolveDisputeEscrowDialogProps) => {
+	const { signTransaction } = useWallet()
 	const setIsResolvingDispute = useEscrowUIBoundedStore(
 		(state) => state.setIsResolvingDispute,
 	)
@@ -64,12 +66,14 @@ const useResolveDisputeEscrowDialog = ({
 		if (!selectedEscrow) return
 
 		try {
+			if (!signTransaction) throw new Error('Wallet not connected')
+
 			const response = await resolveDispute({
 				contractId: selectedEscrow?.contractId,
 				disputeResolver: selectedEscrow?.disputeResolver,
 				approverFunds: payload.approverFunds,
 				receiverFunds: payload.receiverFunds,
-			})
+			}, signTransaction)
 
 			if (response.status === 'SUCCESS') {
 				form.reset()

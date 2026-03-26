@@ -3,6 +3,7 @@
 'use client'
 
 import type { Escrow, Milestone } from '~/@types/escrow.entity'
+import { useWallet } from '~/components/modules/auth/wallet/hooks/wallet.hook'
 import {
 	useGlobalAuthenticationStore,
 	useGlobalBoundedStore,
@@ -12,6 +13,7 @@ import { changeMilestoneFlag } from '../../../services/change-mileston-flag.serv
 import { useEscrowUIBoundedStore } from '../../../store/ui'
 
 const useChangeFlagEscrowDialog = () => {
+	const { signTransaction } = useWallet()
 	const { address } = useGlobalAuthenticationStore()
 	const setIsChangingStatus = useEscrowUIBoundedStore(
 		(state) => state.setIsChangingStatus,
@@ -35,12 +37,14 @@ const useChangeFlagEscrowDialog = () => {
 		setIsChangingStatus(true)
 
 		try {
+			if (!signTransaction) throw new Error('Wallet not connected')
+
 			const response = await changeMilestoneFlag({
 				contractId: selectedEscrow?.contractId,
 				milestoneIndex: index.toString(),
 				newFlag: true,
 				approver: address,
-			})
+			}, signTransaction)
 
 			if (response.status === 'SUCCESS') {
 				setIsChangingStatus(false)

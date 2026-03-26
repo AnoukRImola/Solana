@@ -12,6 +12,37 @@ export type Milestone = {
 	completedAt?: UpdatedAt
 }
 
+export type MultiReleaseMilestone = Milestone & {
+	amount: string
+	receiver: string
+}
+
+export type EscrowType = 'single-release' | 'multi-release'
+
+export interface TravelRuleData {
+	originatorName: string
+	originatorAccount: string
+	originatorJurisdiction: string
+	beneficiaryName: string
+	beneficiaryAccount: string
+	beneficiaryJurisdiction: string
+	transferPurpose: string
+}
+
+export interface ComplianceData {
+	kycVerified: boolean
+	kycProvider: string
+	kycTimestamp: string
+	riskScore: number
+	jurisdiction: string
+}
+
+export interface EscrowComplianceData {
+	escrowAddress: string
+	requiresKyc: boolean
+	travelRule: TravelRuleData | null
+}
+
 export interface Escrow {
 	id: string
 	title: string
@@ -40,6 +71,9 @@ export interface Escrow {
 	receiver?: string
 	receiverMemo?: number
 	disputeStartedBy?: string
+	escrowType?: EscrowType
+	compliance?: ComplianceData
+	escrowCompliance?: EscrowComplianceData
 }
 
 export type RolesInEscrow =

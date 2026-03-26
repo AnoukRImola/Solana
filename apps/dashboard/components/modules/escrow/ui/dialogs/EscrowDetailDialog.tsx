@@ -37,6 +37,7 @@ import {
 	SuccessReleaseDialog,
 	SuccessResolveDisputeDialog,
 } from './SuccessDialog'
+import { ComplianceStatusCard } from './cards/ComplianceStatusCard'
 import EntityCard from './cards/EntityCard'
 import { StatisticsCard } from './cards/StatisticsCard'
 import useEscrowDetailDialog from './hooks/escrow-detail-dialog.hook'
@@ -181,6 +182,13 @@ const EscrowDetailDialog = ({
 							value={formatDollar(selectedEscrow.balance ?? 'null')}
 							tooltipContent="Current balance of the escrow (smart contract)."
 						/>
+
+						{(selectedEscrow.compliance || selectedEscrow.escrowCompliance) && (
+							<ComplianceStatusCard
+								compliance={selectedEscrow.compliance}
+								escrowCompliance={selectedEscrow.escrowCompliance}
+							/>
+						)}
 
 						{/* Escrow ID and Actions */}
 						<EscrowIDActions

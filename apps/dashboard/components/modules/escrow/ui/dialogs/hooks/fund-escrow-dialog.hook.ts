@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import type { z } from 'zod'
+import { useWallet } from '~/components/modules/auth/wallet/hooks/wallet.hook'
 import { fundEscrow } from '~/components/modules/escrow/services/fund-escrow.service'
 import {
 	useGlobalAuthenticationStore,
@@ -22,6 +23,7 @@ interface useFundEscrowDialogProps {
 const useFundEscrowDialog = ({
 	setIsSecondDialogOpen,
 }: useFundEscrowDialogProps) => {
+	const { signTransaction } = useWallet()
 	const { address } = useGlobalAuthenticationStore()
 	const selectedEscrow = useGlobalBoundedStore((state) => state.selectedEscrow)
 	const setIsFundingEscrow = useEscrowUIBoundedStore(
@@ -72,11 +74,15 @@ const useFundEscrowDialog = ({
 		setIsFundingEscrow(true)
 
 		try {
+			if (!signTransaction) {
+				throw new Error('Wallet not connected')
+			}
+
 			const response = await fundEscrow({
 				signer: address,
 				amount: payload.amount,
 				contractId: selectedEscrow!.contractId,
-			})
+			}, signTransaction)
 
 			if (response.status === 'SUCCESS' || response.status === 201) {
 				form.reset()
