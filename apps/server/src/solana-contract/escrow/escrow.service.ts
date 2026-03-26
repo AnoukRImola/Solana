@@ -1,62 +1,35 @@
-import { createHash } from 'node:crypto'
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common'
-import * as borsh from '@project-serum/borsh'
+import { BN } from '@coral-xyz/anchor'
+import { PublicKey, SystemProgram, Transaction } from '@solana/web3.js'
 import {
-	Connection,
-	PublicKey,
-	SystemProgram,
-	Transaction,
-	TransactionInstruction,
-} from '@solana/web3.js'
+	getAssociatedTokenAddress,
+	TOKEN_PROGRAM_ID,
+} from '@solana/spl-token'
 import { apiConfig } from 'src/config/api.config'
+import {
+	getConnection,
+	getProgram,
+	deriveEscrowPda,
+	deriveMultiReleaseEscrowPda,
+} from 'src/config/constants/program.constant'
 import type {
 	ApiResponse,
 	EscrowCamelCaseResponse,
 } from 'src/interfaces/response.interface'
-import { mapErrorCodeToMessage } from 'src/utils/errors.utils'
-import { adjustPricesToMicroUSDC } from 'src/utils/parse.utils'
-import { buildTransaction } from 'src/utils/transaction.utils'
-import type { HelperService } from '../helper/helper.service'
 import type { PendingWriteQueueService } from '../queue/pending-write-queue.service'
-import type { EscrowDto } from './Dto/escrow.dto'
 import type { EscrowFirestoreService } from './firestore-services/escrow-firestore.service'
-
-interface FundEscrowSwapData {
-	originalCurrency: string
-	usdcAmount: string
-	conversionRate: string
-	conversionTimestamp: number
-}
+import type { EscrowDto } from './Dto/escrow.dto'
 
 @Injectable()
 export class EscrowService {
-	private trustlessContractId: string
-	private solanaServer: Connection
-
 	constructor(
 		private pendingWriteQueue: PendingWriteQueueService,
 		private readonly escrowFirestoreService: EscrowFirestoreService,
-		private readonly helperService: HelperService,
-	) {
-		this.trustlessContractId = apiConfig.trustlessContractId
-		this.solanaServer = this.helperService.solanaServer
-	}
+	) {}
 
-	private async getSolanaAddress(
-		signer: string,
-	): Promise<Buffer<ArrayBufferLike> | null> {
-		const publicKey = new PublicKey(signer)
-		try {
-			const accountInfo = await this.solanaServer.getAccountInfo(publicKey)
-
-			if (!accountInfo?.data) throw new Error('Account not found')
-
-			return accountInfo?.data
-		} catch (e) {
-			console.error(`Failed to deserialize account data for ${signer}:`, e)
-			return null
-		}
-	}
+	// ============================
+	// Single-Release Escrow
+	// ============================
 
 	async fundEscrow(
 		contractId: string,
@@ -64,64 +37,52 @@ export class EscrowService {
 		amount: string,
 	): Promise<ApiResponse> {
 		try {
-			const contract = new PublicKey(contractId)
-			const account = new PublicKey(signer)
+			const program = getProgram()
+			const connection = getConnection()
+			const signerPubkey = new PublicKey(signer)
+			const escrowPda = new PublicKey(contractId)
 
-			const operationData = Buffer.from(
-				borsh
-					.struct([
-						borsh.str('action'),
-						borsh.str('contract_id'),
-						borsh.u128('price'),
-					])
-					.encode({
-						action: 'fund_escrow',
-						price: amount,
-						signer,
-					}),
+			// Fetch on-chain escrow to get mint address
+			const escrowData = await program.account.escrowData.fetch(escrowPda)
+			const mint = escrowData.trustline.address
+
+			const escrowTokenAccount = await getAssociatedTokenAddress(
+				mint,
+				escrowPda,
+				true,
 			)
-			const transaction = await buildTransaction({
-				account,
-				connection: this.solanaServer,
-				operations: [
-					new TransactionInstruction({
-						keys: [
-							{ pubkey: account, isSigner: true, isWritable: true },
-							{ pubkey: contract, isSigner: false, isWritable: true },
-							{
-								pubkey: SystemProgram.programId,
-								isSigner: false,
-								isWritable: false,
-							},
-						],
-						programId: new PublicKey(this.trustlessContractId),
-						data: operationData,
-					}),
-				],
-			})
+			const userTokenAccount = await getAssociatedTokenAddress(
+				mint,
+				signerPubkey,
+			)
 
-			const serializedTransaction = transaction.serialize({
-				requireAllSignatures: false,
-				verifySignatures: false,
-			})
+			const ix = await program.methods
+				.fundEscrow(new BN(amount))
+				.accounts({
+					signer: signerPubkey,
+					escrowAccount: escrowPda,
+					escrowTokenAccount,
+					userTokenAccount,
+					tokenProgram: TOKEN_PROGRAM_ID,
+				})
+				.instruction()
 
-			const preparedTransaction = {
-				hash: () => createHash('sha256').update(serializedTransaction).digest(),
-				toXDR: () => serializedTransaction.toString('base64'),
-			}
-			const txHash = preparedTransaction.hash().toString('hex')
+			const { blockhash } = await connection.getLatestBlockhash()
+			const tx = new Transaction({ recentBlockhash: blockhash, feePayer: signerPubkey })
+			tx.add(ix)
 
-			this.pendingWriteQueue.add(txHash, {
+			const unsignedTx = tx
+				.serialize({ requireAllSignatures: false })
+				.toString('base64')
+
+			this.pendingWriteQueue.add(contractId, {
 				type: 'SET_BALANCE',
-				payload: {
-					contractId,
-					amount,
-				},
+				payload: { contractId, amount },
 			})
 
 			return {
 				status: 'SUCCESS',
-				unsignedTransaction: preparedTransaction.toXDR(),
+				unsignedTransaction: unsignedTx,
 			}
 		} catch (error) {
 			throw new HttpException(
@@ -131,31 +92,161 @@ export class EscrowService {
 		}
 	}
 
-	// TODO: PR5 — Rewrite with Anchor program.methods.releaseFunds()
 	async releaseFunds(
 		contractId: string,
 		releaseSigner: string,
 	): Promise<ApiResponse> {
-		throw new HttpException(
-			{ status: HttpStatus.NOT_IMPLEMENTED, message: 'Not yet implemented for Solana. See PR5.' },
-			HttpStatus.NOT_IMPLEMENTED,
-		)
+		try {
+			const program = getProgram()
+			const connection = getConnection()
+			const releaseSignerPubkey = new PublicKey(releaseSigner)
+			const escrowPda = new PublicKey(contractId)
+
+			const escrowData = await program.account.escrowData.fetch(escrowPda)
+			const mint = escrowData.trustline.address
+
+			const escrowTokenAccount = await getAssociatedTokenAddress(
+				mint,
+				escrowPda,
+				true,
+			)
+
+			const trustlessWorkWallet = new PublicKey(apiConfig.trustlessWorkFeeWallet)
+			const trustlessWorkAccount = await getAssociatedTokenAddress(
+				mint,
+				trustlessWorkWallet,
+			)
+			const platformAccount = await getAssociatedTokenAddress(
+				mint,
+				escrowData.roles.platformAddress,
+			)
+			const receiverAccount = await getAssociatedTokenAddress(
+				mint,
+				escrowData.roles.receiver,
+			)
+
+			const ix = await program.methods
+				.releaseFunds()
+				.accounts({
+					releaseSigner: releaseSignerPubkey,
+					escrowAccount: escrowPda,
+					escrowTokenAccount,
+					trustlessWorkAccount,
+					platformAccount,
+					receiverAccount,
+					tokenProgram: TOKEN_PROGRAM_ID,
+				})
+				.instruction()
+
+			const { blockhash } = await connection.getLatestBlockhash()
+			const tx = new Transaction({
+				recentBlockhash: blockhash,
+				feePayer: releaseSignerPubkey,
+			})
+			tx.add(ix)
+
+			const unsignedTx = tx
+				.serialize({ requireAllSignatures: false })
+				.toString('base64')
+
+			this.pendingWriteQueue.add(contractId, {
+				type: 'MARK_RELEASED',
+				payload: { contractId },
+			})
+
+			return {
+				status: 'SUCCESS',
+				unsignedTransaction: unsignedTx,
+			}
+		} catch (error) {
+			throw new HttpException(
+				{ status: HttpStatus.INTERNAL_SERVER_ERROR, message: error.message },
+				HttpStatus.INTERNAL_SERVER_ERROR,
+			)
+		}
 	}
 
-	// TODO: PR5 — Rewrite with Anchor program.methods.resolveDispute()
 	async resolveDispute(
 		contractId: string,
 		disputeResolver: string,
 		approverFunds: string,
 		receiverFunds: string,
 	): Promise<ApiResponse> {
-		throw new HttpException(
-			{ status: HttpStatus.NOT_IMPLEMENTED, message: 'Not yet implemented for Solana. See PR5.' },
-			HttpStatus.NOT_IMPLEMENTED,
-		)
+		try {
+			const program = getProgram()
+			const connection = getConnection()
+			const disputeResolverPubkey = new PublicKey(disputeResolver)
+			const escrowPda = new PublicKey(contractId)
+
+			const escrowData = await program.account.escrowData.fetch(escrowPda)
+			const mint = escrowData.trustline.address
+
+			const escrowTokenAccount = await getAssociatedTokenAddress(
+				mint,
+				escrowPda,
+				true,
+			)
+
+			const trustlessWorkWallet = new PublicKey(apiConfig.trustlessWorkFeeWallet)
+			const trustlessWorkAccount = await getAssociatedTokenAddress(
+				mint,
+				trustlessWorkWallet,
+			)
+			const platformAccount = await getAssociatedTokenAddress(
+				mint,
+				escrowData.roles.platformAddress,
+			)
+			const approverAccount = await getAssociatedTokenAddress(
+				mint,
+				escrowData.roles.approver,
+			)
+			const serviceProviderAccount = await getAssociatedTokenAddress(
+				mint,
+				escrowData.roles.serviceProvider,
+			)
+
+			const ix = await program.methods
+				.resolveDispute(new BN(approverFunds), new BN(receiverFunds))
+				.accounts({
+					disputeResolver: disputeResolverPubkey,
+					escrowAccount: escrowPda,
+					escrowTokenAccount,
+					trustlessWorkAccount,
+					platformAccount,
+					approverAccount,
+					serviceProviderAccount,
+					tokenProgram: TOKEN_PROGRAM_ID,
+				})
+				.instruction()
+
+			const { blockhash } = await connection.getLatestBlockhash()
+			const tx = new Transaction({
+				recentBlockhash: blockhash,
+				feePayer: disputeResolverPubkey,
+			})
+			tx.add(ix)
+
+			const unsignedTx = tx
+				.serialize({ requireAllSignatures: false })
+				.toString('base64')
+
+			this.pendingWriteQueue.add(contractId, {
+				type: 'RESOLVE_DISPUTE',
+				payload: { contractId, disputeResolver, approverFunds, receiverFunds },
+			})
+
+			return {
+				status: 'SUCCESS',
+				unsignedTransaction: unsignedTx,
+			}
+		} catch (error) {
+			throw new HttpException(
+				{ status: HttpStatus.INTERNAL_SERVER_ERROR, message: error.message },
+				HttpStatus.INTERNAL_SERVER_ERROR,
+			)
+		}
 	}
 
-	// TODO: PR5 — Rewrite with Anchor program.methods.changeMilestoneStatus()
 	async changeMilestoneStatus(
 		contractId: string,
 		milestoneIndex: string,
@@ -163,45 +254,197 @@ export class EscrowService {
 		newEvidence: string,
 		serviceProvider: string,
 	): Promise<ApiResponse> {
-		throw new HttpException(
-			{ status: HttpStatus.NOT_IMPLEMENTED, message: 'Not yet implemented for Solana. See PR5.' },
-			HttpStatus.NOT_IMPLEMENTED,
-		)
+		try {
+			const program = getProgram()
+			const connection = getConnection()
+			const serviceProviderPubkey = new PublicKey(serviceProvider)
+			const escrowPda = new PublicKey(contractId)
+
+			const ix = await program.methods
+				.changeMilestoneStatus(
+					Number(milestoneIndex),
+					newStatus,
+					newEvidence || null,
+				)
+				.accounts({
+					serviceProvider: serviceProviderPubkey,
+					escrowAccount: escrowPda,
+				})
+				.instruction()
+
+			const { blockhash } = await connection.getLatestBlockhash()
+			const tx = new Transaction({
+				recentBlockhash: blockhash,
+				feePayer: serviceProviderPubkey,
+			})
+			tx.add(ix)
+
+			const unsignedTx = tx
+				.serialize({ requireAllSignatures: false })
+				.toString('base64')
+
+			this.pendingWriteQueue.add(contractId, {
+				type: 'UPDATE_MILESTONE_STATUS',
+				payload: {
+					contractId,
+					milestone_index: Number(milestoneIndex),
+					new_status: newStatus,
+					new_evidence: newEvidence || '',
+				},
+			})
+
+			return {
+				status: 'SUCCESS',
+				unsignedTransaction: unsignedTx,
+			}
+		} catch (error) {
+			throw new HttpException(
+				{ status: HttpStatus.INTERNAL_SERVER_ERROR, message: error.message },
+				HttpStatus.INTERNAL_SERVER_ERROR,
+			)
+		}
 	}
 
-	// TODO: PR5 — Rewrite with Anchor program.methods.changeMilestoneFlag()
 	async changeMilestoneFlag(
 		contractId: string,
 		milestoneIndex: string,
 		newFlag: boolean,
 		approver: string,
 	): Promise<ApiResponse> {
-		throw new HttpException(
-			{ status: HttpStatus.NOT_IMPLEMENTED, message: 'Not yet implemented for Solana. See PR5.' },
-			HttpStatus.NOT_IMPLEMENTED,
-		)
+		try {
+			const program = getProgram()
+			const connection = getConnection()
+			const approverPubkey = new PublicKey(approver)
+			const escrowPda = new PublicKey(contractId)
+
+			const ix = await program.methods
+				.changeMilestoneFlag(Number(milestoneIndex), newFlag)
+				.accounts({
+					approver: approverPubkey,
+					escrowAccount: escrowPda,
+				})
+				.instruction()
+
+			const { blockhash } = await connection.getLatestBlockhash()
+			const tx = new Transaction({
+				recentBlockhash: blockhash,
+				feePayer: approverPubkey,
+			})
+			tx.add(ix)
+
+			const unsignedTx = tx
+				.serialize({ requireAllSignatures: false })
+				.toString('base64')
+
+			this.pendingWriteQueue.add(contractId, {
+				type: 'UPDATE_MILESTONE_FLAG',
+				payload: {
+					contractId,
+					milestone_index: Number(milestoneIndex),
+					new_flag: newFlag,
+				},
+			})
+
+			return {
+				status: 'SUCCESS',
+				unsignedTransaction: unsignedTx,
+			}
+		} catch (error) {
+			throw new HttpException(
+				{ status: HttpStatus.INTERNAL_SERVER_ERROR, message: error.message },
+				HttpStatus.INTERNAL_SERVER_ERROR,
+			)
+		}
 	}
 
-	// TODO: PR5 — Rewrite with Anchor program.methods.changeDisputeFlag()
 	async changeDisputeFlag(
 		contractId: string,
 		signer: string,
 	): Promise<ApiResponse> {
-		throw new HttpException(
-			{ status: HttpStatus.NOT_IMPLEMENTED, message: 'Not yet implemented for Solana. See PR5.' },
-			HttpStatus.NOT_IMPLEMENTED,
-		)
+		try {
+			const program = getProgram()
+			const connection = getConnection()
+			const signerPubkey = new PublicKey(signer)
+			const escrowPda = new PublicKey(contractId)
+
+			const ix = await program.methods
+				.changeDisputeFlag()
+				.accounts({
+					signer: signerPubkey,
+					escrowAccount: escrowPda,
+				})
+				.instruction()
+
+			const { blockhash } = await connection.getLatestBlockhash()
+			const tx = new Transaction({
+				recentBlockhash: blockhash,
+				feePayer: signerPubkey,
+			})
+			tx.add(ix)
+
+			const unsignedTx = tx
+				.serialize({ requireAllSignatures: false })
+				.toString('base64')
+
+			this.pendingWriteQueue.add(contractId, {
+				type: 'START_DISPUTE',
+				payload: { contractId },
+			})
+
+			return {
+				status: 'SUCCESS',
+				unsignedTransaction: unsignedTx,
+			}
+		} catch (error) {
+			throw new HttpException(
+				{ status: HttpStatus.INTERNAL_SERVER_ERROR, message: error.message },
+				HttpStatus.INTERNAL_SERVER_ERROR,
+			)
+		}
 	}
 
-	// TODO: PR5 — Rewrite with Anchor program.account.escrowData.fetch()
 	async getEscrowByContractID(
 		signer: string,
 		contractId: string,
 	): Promise<EscrowCamelCaseResponse> {
-		throw new HttpException(
-			{ status: HttpStatus.NOT_IMPLEMENTED, message: 'Not yet implemented for Solana. See PR5.' },
-			HttpStatus.NOT_IMPLEMENTED,
-		)
+		try {
+			const program = getProgram()
+			const escrowPda = new PublicKey(contractId)
+
+			const escrowData = await program.account.escrowData.fetch(escrowPda)
+
+			return {
+				engagementId: escrowData.engagementId,
+				title: escrowData.title,
+				description: escrowData.description,
+				amount: escrowData.amount.toString(),
+				platformFee: escrowData.platformFee.toString(),
+				milestones: escrowData.milestones.map((m) => ({
+					description: m.description,
+					status: m.status,
+					evidence: m.evidence,
+					approved_flag: m.approvedFlag,
+				})),
+				disputeFlag: escrowData.flags.dispute,
+				releaseFlag: escrowData.flags.release,
+				resolvedFlag: escrowData.flags.resolved,
+				trustline: escrowData.trustline.address.toBase58(),
+				trustlineDecimals: escrowData.trustline.decimals,
+				receiverMemo: escrowData.receiverMemo.toString(),
+				approver: escrowData.roles.approver.toBase58(),
+				serviceProvider: escrowData.roles.serviceProvider.toBase58(),
+				platformAddress: escrowData.roles.platformAddress.toBase58(),
+				releaseSigner: escrowData.roles.releaseSigner.toBase58(),
+				disputeResolver: escrowData.roles.disputeResolver.toBase58(),
+				receiver: escrowData.roles.receiver.toBase58(),
+				contractId,
+			}
+		} catch (error) {
+			throw new HttpException(
+				{ status: HttpStatus.BAD_REQUEST, message: error.message },
+				HttpStatus.BAD_REQUEST,
+			)
+		}
 	}
 
 	async updateEscrowByContractID(
@@ -210,23 +453,502 @@ export class EscrowService {
 		escrow: EscrowDto,
 	): Promise<ApiResponse> {
 		try {
-			// TODO: PR5 — Rewrite with Anchor program.methods.changeEscrowProperties()
-			await this.escrowFirestoreService.updateEscrowData(
-				contractId,
-				signer,
-				escrow,
+			const program = getProgram()
+			const connection = getConnection()
+			const signerPubkey = new PublicKey(signer)
+			const escrowPda = new PublicKey(contractId)
+
+			const escrowData = await program.account.escrowData.fetch(escrowPda)
+			const mint = escrowData.trustline.address
+
+			const escrowTokenAccount = await getAssociatedTokenAddress(
+				mint,
+				escrowPda,
+				true,
 			)
+
+			const newData = {
+				engagementId: escrow.engagementId,
+				title: escrow.title,
+				description: escrow.description,
+				amount: new BN(escrow.amount),
+				platformFee: new BN(escrow.platformFee),
+				milestones: escrow.milestones.map((m) => ({
+					description: m.description,
+					status: m.status || 'Pending',
+					evidence: m.evidence || '',
+					approvedFlag: m.approved_flag || false,
+				})),
+				flags: {
+					dispute: escrowData.flags.dispute,
+					release: escrowData.flags.release,
+					resolved: escrowData.flags.resolved,
+				},
+				trustline: {
+					address: new PublicKey(escrow.trustline),
+					decimals: escrow.trustlineDecimals,
+				},
+				receiverMemo: new BN(escrow.receiverMemo),
+				roles: {
+					approver: new PublicKey(escrow.approver),
+					serviceProvider: new PublicKey(escrow.serviceProvider),
+					platformAddress: new PublicKey(escrow.platformAddress),
+					releaseSigner: new PublicKey(escrow.releaseSigner),
+					disputeResolver: new PublicKey(escrow.disputeResolver),
+					receiver: new PublicKey(escrow.receiver),
+				},
+				balance: escrowData.balance,
+				isInitialized: escrowData.isInitialized,
+			}
+
+			const ix = await program.methods
+				.changeEscrowProperties(newData)
+				.accounts({
+					platformSigner: signerPubkey,
+					escrowAccount: escrowPda,
+					escrowTokenAccount,
+					systemProgram: SystemProgram.programId,
+				})
+				.instruction()
+
+			const { blockhash } = await connection.getLatestBlockhash()
+			const tx = new Transaction({
+				recentBlockhash: blockhash,
+				feePayer: signerPubkey,
+			})
+			tx.add(ix)
+
+			const unsignedTx = tx
+				.serialize({ requireAllSignatures: false })
+				.toString('base64')
+
+			this.pendingWriteQueue.add(contractId, {
+				type: 'EDIT_ESCROW',
+				payload: { contractId, signer, escrow },
+			})
 
 			return {
 				status: 'SUCCESS',
-				message: 'Escrow data updated in Firestore. On-chain update pending PR5.',
+				unsignedTransaction: unsignedTx,
 			}
 		} catch (error) {
-			console.error('Error in updateEscrowByContractID:', error)
-			const message = error instanceof Error ? error.message : 'Failed to update escrow.'
+			const message =
+				error instanceof Error ? error.message : 'Failed to update escrow.'
 			throw new HttpException(
 				{ status: HttpStatus.BAD_REQUEST, message },
 				HttpStatus.BAD_REQUEST,
+			)
+		}
+	}
+
+	// ============================
+	// Multi-Release Escrow
+	// ============================
+
+	async fundMultiReleaseEscrow(
+		contractId: string,
+		signer: string,
+		amount: string,
+	): Promise<ApiResponse> {
+		try {
+			const program = getProgram()
+			const connection = getConnection()
+			const signerPubkey = new PublicKey(signer)
+			const escrowPda = new PublicKey(contractId)
+
+			const escrowData =
+				await program.account.multiReleaseEscrowData.fetch(escrowPda)
+			const mint = escrowData.trustline.address
+
+			const escrowTokenAccount = await getAssociatedTokenAddress(
+				mint,
+				escrowPda,
+				true,
+			)
+			const userTokenAccount = await getAssociatedTokenAddress(
+				mint,
+				signerPubkey,
+			)
+
+			const ix = await program.methods
+				.fundMultiReleaseEscrow(new BN(amount))
+				.accounts({
+					signer: signerPubkey,
+					escrowAccount: escrowPda,
+					escrowTokenAccount,
+					userTokenAccount,
+					tokenProgram: TOKEN_PROGRAM_ID,
+				})
+				.instruction()
+
+			const { blockhash } = await connection.getLatestBlockhash()
+			const tx = new Transaction({
+				recentBlockhash: blockhash,
+				feePayer: signerPubkey,
+			})
+			tx.add(ix)
+
+			const unsignedTx = tx
+				.serialize({ requireAllSignatures: false })
+				.toString('base64')
+
+			this.pendingWriteQueue.add(contractId, {
+				type: 'SET_BALANCE',
+				payload: { contractId, amount },
+			})
+
+			return {
+				status: 'SUCCESS',
+				unsignedTransaction: unsignedTx,
+			}
+		} catch (error) {
+			throw new HttpException(
+				{ status: HttpStatus.INTERNAL_SERVER_ERROR, message: error.message },
+				HttpStatus.INTERNAL_SERVER_ERROR,
+			)
+		}
+	}
+
+	async changeMultiReleaseMilestoneStatus(
+		contractId: string,
+		milestoneIndex: string,
+		newStatus: string,
+		newEvidence: string,
+		serviceProvider: string,
+	): Promise<ApiResponse> {
+		try {
+			const program = getProgram()
+			const connection = getConnection()
+			const serviceProviderPubkey = new PublicKey(serviceProvider)
+			const escrowPda = new PublicKey(contractId)
+
+			const ix = await program.methods
+				.changeMultiReleaseMilestoneStatus(
+					Number(milestoneIndex),
+					newStatus,
+					newEvidence || null,
+				)
+				.accounts({
+					serviceProvider: serviceProviderPubkey,
+					escrowAccount: escrowPda,
+				})
+				.instruction()
+
+			const { blockhash } = await connection.getLatestBlockhash()
+			const tx = new Transaction({
+				recentBlockhash: blockhash,
+				feePayer: serviceProviderPubkey,
+			})
+			tx.add(ix)
+
+			const unsignedTx = tx
+				.serialize({ requireAllSignatures: false })
+				.toString('base64')
+
+			return {
+				status: 'SUCCESS',
+				unsignedTransaction: unsignedTx,
+			}
+		} catch (error) {
+			throw new HttpException(
+				{ status: HttpStatus.INTERNAL_SERVER_ERROR, message: error.message },
+				HttpStatus.INTERNAL_SERVER_ERROR,
+			)
+		}
+	}
+
+	async approveMultiReleaseMilestone(
+		contractId: string,
+		milestoneIndex: string,
+		approved: boolean,
+		approver: string,
+	): Promise<ApiResponse> {
+		try {
+			const program = getProgram()
+			const connection = getConnection()
+			const approverPubkey = new PublicKey(approver)
+			const escrowPda = new PublicKey(contractId)
+
+			const ix = await program.methods
+				.approveMultiReleaseMilestone(Number(milestoneIndex), approved)
+				.accounts({
+					approver: approverPubkey,
+					escrowAccount: escrowPda,
+				})
+				.instruction()
+
+			const { blockhash } = await connection.getLatestBlockhash()
+			const tx = new Transaction({
+				recentBlockhash: blockhash,
+				feePayer: approverPubkey,
+			})
+			tx.add(ix)
+
+			const unsignedTx = tx
+				.serialize({ requireAllSignatures: false })
+				.toString('base64')
+
+			return {
+				status: 'SUCCESS',
+				unsignedTransaction: unsignedTx,
+			}
+		} catch (error) {
+			throw new HttpException(
+				{ status: HttpStatus.INTERNAL_SERVER_ERROR, message: error.message },
+				HttpStatus.INTERNAL_SERVER_ERROR,
+			)
+		}
+	}
+
+	async releaseMilestoneFunds(
+		contractId: string,
+		milestoneIndex: string,
+		releaseSigner: string,
+	): Promise<ApiResponse> {
+		try {
+			const program = getProgram()
+			const connection = getConnection()
+			const releaseSignerPubkey = new PublicKey(releaseSigner)
+			const escrowPda = new PublicKey(contractId)
+
+			const escrowData =
+				await program.account.multiReleaseEscrowData.fetch(escrowPda)
+			const mint = escrowData.trustline.address
+			const milestone = escrowData.milestones[Number(milestoneIndex)]
+
+			const escrowTokenAccount = await getAssociatedTokenAddress(
+				mint,
+				escrowPda,
+				true,
+			)
+			const trustlessWorkWallet = new PublicKey(apiConfig.trustlessWorkFeeWallet)
+			const trustlessWorkAccount = await getAssociatedTokenAddress(
+				mint,
+				trustlessWorkWallet,
+			)
+			const platformAccount = await getAssociatedTokenAddress(
+				mint,
+				escrowData.roles.platformAddress,
+			)
+			const receiverAccount = await getAssociatedTokenAddress(
+				mint,
+				milestone.receiver,
+			)
+
+			const ix = await program.methods
+				.releaseMilestoneFunds(Number(milestoneIndex))
+				.accounts({
+					releaseSigner: releaseSignerPubkey,
+					escrowAccount: escrowPda,
+					escrowTokenAccount,
+					trustlessWorkAccount,
+					platformAccount,
+					receiverAccount,
+					tokenProgram: TOKEN_PROGRAM_ID,
+				})
+				.instruction()
+
+			const { blockhash } = await connection.getLatestBlockhash()
+			const tx = new Transaction({
+				recentBlockhash: blockhash,
+				feePayer: releaseSignerPubkey,
+			})
+			tx.add(ix)
+
+			const unsignedTx = tx
+				.serialize({ requireAllSignatures: false })
+				.toString('base64')
+
+			return {
+				status: 'SUCCESS',
+				unsignedTransaction: unsignedTx,
+			}
+		} catch (error) {
+			throw new HttpException(
+				{ status: HttpStatus.INTERNAL_SERVER_ERROR, message: error.message },
+				HttpStatus.INTERNAL_SERVER_ERROR,
+			)
+		}
+	}
+
+	async disputeMilestone(
+		contractId: string,
+		milestoneIndex: string,
+		signer: string,
+	): Promise<ApiResponse> {
+		try {
+			const program = getProgram()
+			const connection = getConnection()
+			const signerPubkey = new PublicKey(signer)
+			const escrowPda = new PublicKey(contractId)
+
+			const ix = await program.methods
+				.disputeMilestone(Number(milestoneIndex))
+				.accounts({
+					signer: signerPubkey,
+					escrowAccount: escrowPda,
+				})
+				.instruction()
+
+			const { blockhash } = await connection.getLatestBlockhash()
+			const tx = new Transaction({
+				recentBlockhash: blockhash,
+				feePayer: signerPubkey,
+			})
+			tx.add(ix)
+
+			const unsignedTx = tx
+				.serialize({ requireAllSignatures: false })
+				.toString('base64')
+
+			return {
+				status: 'SUCCESS',
+				unsignedTransaction: unsignedTx,
+			}
+		} catch (error) {
+			throw new HttpException(
+				{ status: HttpStatus.INTERNAL_SERVER_ERROR, message: error.message },
+				HttpStatus.INTERNAL_SERVER_ERROR,
+			)
+		}
+	}
+
+	async resolveMilestoneDispute(
+		contractId: string,
+		milestoneIndex: string,
+		disputeResolver: string,
+		approverFunds: string,
+		receiverFunds: string,
+	): Promise<ApiResponse> {
+		try {
+			const program = getProgram()
+			const connection = getConnection()
+			const disputeResolverPubkey = new PublicKey(disputeResolver)
+			const escrowPda = new PublicKey(contractId)
+
+			const escrowData =
+				await program.account.multiReleaseEscrowData.fetch(escrowPda)
+			const mint = escrowData.trustline.address
+			const milestone = escrowData.milestones[Number(milestoneIndex)]
+
+			const escrowTokenAccount = await getAssociatedTokenAddress(
+				mint,
+				escrowPda,
+				true,
+			)
+			const trustlessWorkWallet = new PublicKey(apiConfig.trustlessWorkFeeWallet)
+			const trustlessWorkAccount = await getAssociatedTokenAddress(
+				mint,
+				trustlessWorkWallet,
+			)
+			const platformAccount = await getAssociatedTokenAddress(
+				mint,
+				escrowData.roles.platformAddress,
+			)
+			const approverAccount = await getAssociatedTokenAddress(
+				mint,
+				escrowData.roles.approver,
+			)
+			const receiverAccount = await getAssociatedTokenAddress(
+				mint,
+				milestone.receiver,
+			)
+
+			const ix = await program.methods
+				.resolveMilestoneDispute(
+					Number(milestoneIndex),
+					new BN(approverFunds),
+					new BN(receiverFunds),
+				)
+				.accounts({
+					disputeResolver: disputeResolverPubkey,
+					escrowAccount: escrowPda,
+					escrowTokenAccount,
+					trustlessWorkAccount,
+					platformAccount,
+					approverAccount,
+					receiverAccount,
+					tokenProgram: TOKEN_PROGRAM_ID,
+				})
+				.instruction()
+
+			const { blockhash } = await connection.getLatestBlockhash()
+			const tx = new Transaction({
+				recentBlockhash: blockhash,
+				feePayer: disputeResolverPubkey,
+			})
+			tx.add(ix)
+
+			const unsignedTx = tx
+				.serialize({ requireAllSignatures: false })
+				.toString('base64')
+
+			return {
+				status: 'SUCCESS',
+				unsignedTransaction: unsignedTx,
+			}
+		} catch (error) {
+			throw new HttpException(
+				{ status: HttpStatus.INTERNAL_SERVER_ERROR, message: error.message },
+				HttpStatus.INTERNAL_SERVER_ERROR,
+			)
+		}
+	}
+
+	async withdrawRemainingFunds(
+		contractId: string,
+		approver: string,
+	): Promise<ApiResponse> {
+		try {
+			const program = getProgram()
+			const connection = getConnection()
+			const approverPubkey = new PublicKey(approver)
+			const escrowPda = new PublicKey(contractId)
+
+			const escrowData =
+				await program.account.multiReleaseEscrowData.fetch(escrowPda)
+			const mint = escrowData.trustline.address
+
+			const escrowTokenAccount = await getAssociatedTokenAddress(
+				mint,
+				escrowPda,
+				true,
+			)
+			const approverTokenAccount = await getAssociatedTokenAddress(
+				mint,
+				approverPubkey,
+			)
+
+			const ix = await program.methods
+				.withdrawRemainingFunds()
+				.accounts({
+					approver: approverPubkey,
+					escrowAccount: escrowPda,
+					escrowTokenAccount,
+					approverTokenAccount,
+					tokenProgram: TOKEN_PROGRAM_ID,
+				})
+				.instruction()
+
+			const { blockhash } = await connection.getLatestBlockhash()
+			const tx = new Transaction({
+				recentBlockhash: blockhash,
+				feePayer: approverPubkey,
+			})
+			tx.add(ix)
+
+			const unsignedTx = tx
+				.serialize({ requireAllSignatures: false })
+				.toString('base64')
+
+			return {
+				status: 'SUCCESS',
+				unsignedTransaction: unsignedTx,
+			}
+		} catch (error) {
+			throw new HttpException(
+				{ status: HttpStatus.INTERNAL_SERVER_ERROR, message: error.message },
+				HttpStatus.INTERNAL_SERVER_ERROR,
 			)
 		}
 	}

@@ -1,83 +1,115 @@
-export function mapErrorCodeToMessage(code: string): string {
-	switch (code) {
-		case '1':
+/**
+ * Maps Anchor program error codes (6000+) to human-readable messages.
+ * Error codes match the Escrow program's errors.rs definitions.
+ */
+export function mapErrorCodeToMessage(code: number | string): string {
+	const errorCode = typeof code === 'string' ? Number(code) : code
+
+	switch (errorCode) {
+		case 6000:
 			return 'Escrow not funded'
-		case '2':
+		case 6001:
+			return 'Failed to deserialize escrow data'
+		case 6002:
 			return 'Amount cannot be zero'
-		case '3':
+		case 6003:
 			return 'Escrow already initialized'
-		case '4':
+		case 6004:
 			return 'Only the signer can fund the escrow'
-		case '5':
+		case 6005:
 			return 'Escrow already funded'
-		case '6':
-			return 'This escrow is already fully funded'
-		case '7':
-			return 'The signer does not have sufficient funds'
-		case '8':
+		case 6006:
+			return 'Escrow already fully funded'
+		case 6007:
+			return 'Signer has insufficient funds'
+		case 6008:
 			return 'Not enough allowance to fund this escrow'
-		case '9':
+		case 6009:
 			return 'Escrow already completed'
-		case '10':
-			return 'The signer does not have sufficient funds to complete this escrow'
-		case '11':
+		case 6010:
+			return 'Signer has insufficient funds to complete escrow'
+		case 6011:
 			return 'Only the signer can request a refund'
-		case '12':
+		case 6012:
 			return 'No funds available to refund'
-		case '13':
-			return 'The contract has no balance to repay'
-		case '14':
+		case 6013:
+			return 'Contract has no balance to repay'
+		case 6014:
 			return 'Escrow not found'
-		case '15':
-			return 'Only the release signer can distribute the escrow earnings'
-		case '16':
-			return 'The escrow must be completed to distribute earnings'
-		case '17':
-			return 'The escrow balance must be equal to the amount of earnings defined for the escrow'
-		case '18':
-			return 'The contract does not have sufficient funds'
-		case '19':
-			return 'Only the platform address should be able to execute this function'
-		case '20':
+		case 6015:
+			return 'Only the release signer can distribute earnings'
+		case 6016:
+			return 'Escrow not completed'
+		case 6017:
+			return 'Escrow balance insufficient for distribution'
+		case 6018:
+			return 'Contract has insufficient funds'
+		case 6019:
+			return 'Only platform address may execute this function'
+		case 6020:
 			return 'Escrow not initialized'
-		case '21':
+		case 6021:
 			return 'Only the service provider can change milestone status'
-		case '22':
-			return 'Escrow initialized without milestone'
-		case '23':
+		case 6022:
+			return 'No milestones defined'
+		case 6023:
 			return 'Invalid milestone index'
-		case '24':
+		case 6024:
 			return 'Only the approver can change milestone flag'
-		case '25':
+		case 6025:
 			return 'Only the dispute resolver can execute this function'
-		case '26':
+		case 6026:
 			return 'Escrow already in dispute'
-		case '27':
+		case 6027:
 			return 'Escrow not in dispute'
-		case '28':
+		case 6028:
 			return 'Insufficient funds for resolution'
-		case '29':
+		case 6029:
 			return 'Invalid state'
-		case '30':
-			return 'Escrow has been opened for dispute resolution'
-		case '31':
-			return 'Amount to deposit is greater than the escrow amount'
-		case '32':
-			return 'This operation can cause an Overflow'
-		case '33':
-			return 'This operation can cause an Underflow'
-		case '34':
-			return 'This operation can cause Division error'
-		case '35':
-			return 'Admin not found!'
-		case '36':
+		case 6030:
+			return 'Escrow opened for dispute resolution'
+		case 6031:
+			return 'Amount to deposit is greater than escrow amount'
+		case 6032:
+			return 'Operation may cause overflow'
+		case 6033:
+			return 'Operation may cause underflow'
+		case 6034:
+			return 'Operation may cause division error'
+		case 6035:
+			return 'Admin not found'
+		case 6036:
 			return 'Insufficient approver funds for commissions'
-		case '37':
-			return 'Insufficient Service Provider funds for commissions'
-		case '38':
-			return "You can't change the escrow properties after the milestone is approved"
-		case '39':
+		case 6037:
+			return 'Insufficient service provider funds for commissions'
+		case 6038:
+			return "Milestone approved, can't change escrow properties"
+		case 6039:
 			return 'Escrow has funds'
+		case 6040:
+			return 'Escrow already resolved'
+		case 6041:
+			return 'Too many escrows requested'
+		case 6042:
+			return 'Unauthorized to change dispute flag'
+		case 6043:
+			return 'Argument conversion failed'
+		case 6044:
+			return 'Too many milestones in escrow'
+		case 6045:
+			return 'Allowance has expired'
+		case 6046:
+			return 'Insufficient allowance'
+		case 6047:
+			return 'Invalid expiration slot'
+		case 6048:
+			return 'Decimal must not be greater than 18'
+		case 6049:
+			return 'Unauthorized'
+		case 6050:
+			return 'Invalid decimals'
+		case 6051:
+			return 'Already initialized'
 		default:
 			return 'Unknown error occurred in the contract'
 	}

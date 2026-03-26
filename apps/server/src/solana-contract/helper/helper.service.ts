@@ -11,8 +11,8 @@ import {
 	PublicKey,
 } from '@solana/web3.js'
 import { apiConfig } from 'src/config/api.config'
+import { getConnection, getProgram } from 'src/config/constants/program.constant'
 import { ApiResponse } from 'src/interfaces/response.interface'
-import { deserializeEscrow } from 'src/utils/parse.utils'
 import {
 	buildTransaction,
 	signAndSendTransaction,
@@ -22,40 +22,13 @@ import { PendingWriteQueueService } from '../queue/pending-write-queue.service'
 
 @Injectable()
 export class HelperService {
-	private sourceKeypair: Keypair
-
-	public trustlessContractId: string
-	public usdtTokenPublic: string
-	public usdcTokenPublic: string
 	public solanaServer: Connection
 
 	constructor(
 		private pendingWriteQueue: PendingWriteQueueService,
 		private pendingWriteHandler: PendingWriteHandlerService,
 	) {
-		this.trustlessContractId = apiConfig.trustlessContractId
-		this.usdcTokenPublic = process.env.USDC_TOKEN_MINT || ''
-		this.usdtTokenPublic = process.env.USDT_TOKEN_MINT || ''
-		this.solanaServer = this.getServerConnection()
-	}
-
-	getServerConnection(options?: Commitment | ConnectionConfig): Connection {
-		try {
-			const connection = new Connection(
-				apiConfig.solanaServerURL,
-				options || 'confirmed',
-			)
-
-			return connection
-		} catch (error) {
-			throw new HttpException(
-				{
-					status: HttpStatus.INTERNAL_SERVER_ERROR,
-					message: `<SOL Connection>${error.message}`,
-				},
-				HttpStatus.INTERNAL_SERVER_ERROR,
-			)
-		}
+		this.solanaServer = getConnection()
 	}
 
 	async sendTransaction(
@@ -73,9 +46,7 @@ export class HelperService {
 			)
 			txSignature = await this.solanaServer.sendRawTransaction(
 				transactionBuffer,
-				{
-					skipPreflight: false,
-				},
+				{ skipPreflight: false },
 			)
 
 			const { blockhash, lastValidBlockHeight } =
@@ -95,6 +66,7 @@ export class HelperService {
 				)
 
 			if (saveInfo) await this.handlePendingWrite(queueKey, txSignature)
+
 			if (!returnEscrowDataIsRequired) {
 				return {
 					status: 'SUCCESS',
@@ -103,50 +75,58 @@ export class HelperService {
 				}
 			}
 
-			let contractIdForFetching: string | undefined
-			const pendingItem = this.pendingWriteQueue.get(queueKey)
-
-			if (pendingItem) {
-				if (pendingItem.type === 'SAVE_ESCROW') {
-					contractIdForFetching =
-						(
-							pendingItem.payload.escrowProperties as Partial<
-								Record<string, string>
-							>
-						)?.contractId || queueKey
-				} else if (pendingItem.payload?.contractId) {
-					contractIdForFetching = pendingItem.payload.contractId as string
+			// Fetch escrow data using Anchor after confirmation
+			const contractId = this.resolveContractId(queueKey)
+			if (!contractId) {
+				return {
+					status: 'SUCCESS',
+					message: 'Transaction successful, but contract ID not determined.',
 				}
 			}
 
-			if (!contractIdForFetching) {
+			try {
+				const program = getProgram()
+				const escrowPda = new PublicKey(contractId)
+				const escrowData = await program.account.escrowData.fetch(escrowPda)
+
+				return {
+					status: 'SUCCESS',
+					message: 'Transaction successful and escrow data retrieved.',
+					contract_id: contractId,
+					escrow: {
+						engagementId: escrowData.engagementId,
+						title: escrowData.title,
+						description: escrowData.description,
+						amount: escrowData.amount.toString(),
+						platformFee: escrowData.platformFee.toString(),
+						milestones: escrowData.milestones.map((m) => ({
+							description: m.description,
+							status: m.status,
+							evidence: m.evidence,
+							approved_flag: m.approvedFlag,
+						})),
+						disputeFlag: escrowData.flags.dispute,
+						releaseFlag: escrowData.flags.release,
+						resolvedFlag: escrowData.flags.resolved,
+						trustline: escrowData.trustline.address.toBase58(),
+						trustlineDecimals: escrowData.trustline.decimals,
+						receiverMemo: escrowData.receiverMemo.toString(),
+						approver: escrowData.roles.approver.toBase58(),
+						serviceProvider: escrowData.roles.serviceProvider.toBase58(),
+						platformAddress: escrowData.roles.platformAddress.toBase58(),
+						releaseSigner: escrowData.roles.releaseSigner.toBase58(),
+						disputeResolver: escrowData.roles.disputeResolver.toBase58(),
+						receiver: escrowData.roles.receiver.toBase58(),
+						contractId,
+					},
+				}
+			} catch {
 				return {
 					status: 'SUCCESS',
 					message:
-						'Transaction successful, but contract ID for fetching escrow data was not determined.',
+						'Transaction successful, but escrow data could not be retrieved.',
+					contract_id: contractId,
 				}
-			}
-
-			const escrowAccountPubkey = new PublicKey(contractIdForFetching)
-			const escrowAccountInfo =
-				await this.solanaServer.getAccountInfo(escrowAccountPubkey)
-
-			if (!escrowAccountInfo?.data) {
-				return {
-					status: 'SUCCESS',
-					message:
-						'Transaction successful, but escrow data could not be retrieved from account.',
-					contract_id: contractIdForFetching,
-				}
-			}
-
-			const escrow = deserializeEscrow(escrowAccountInfo.data)
-
-			return {
-				status: 'SUCCESS',
-				message: 'Transaction successful and escrow data retrieved.',
-				contract_id: contractIdForFetching,
-				escrow,
 			}
 		} catch (error) {
 			console.error('Solana sendTransaction error:', error)
@@ -171,10 +151,11 @@ export class HelperService {
 	async establishTrustline(sourceSecretKey: string): Promise<ApiResponse> {
 		try {
 			const secretKeyBuffer = Buffer.from(sourceSecretKey, 'base64')
-			this.sourceKeypair = Keypair.fromSecretKey(secretKeyBuffer)
-			const ownerPublicKey = this.sourceKeypair.publicKey
+			const sourceKeypair = Keypair.fromSecretKey(secretKeyBuffer)
+			const ownerPublicKey = sourceKeypair.publicKey
 
-			const tokenMintAddress = new PublicKey(this.usdcTokenPublic)
+			const usdcMint = process.env.USDC_TOKEN_MINT || ''
+			const tokenMintAddress = new PublicKey(usdcMint)
 
 			const associatedTokenAddress = await getAssociatedTokenAddress(
 				tokenMintAddress,
@@ -206,7 +187,7 @@ export class HelperService {
 			})
 			const signatureResults = await signAndSendTransaction({
 				transaction,
-				signer: this.sourceKeypair,
+				signer: sourceKeypair,
 				connection: this.solanaServer,
 			})
 
@@ -232,7 +213,6 @@ export class HelperService {
 		}
 	}
 
-	// TODO: PR5 — Rewrite using getConnection().getTokenAccountBalance()
 	async getMultipleEscrowBalance(
 		signer: string,
 		addresses: string[],
@@ -243,7 +223,8 @@ export class HelperService {
 			for (const addr of addresses) {
 				try {
 					const pubkey = new PublicKey(addr)
-					const balanceInfo = await this.solanaServer.getTokenAccountBalance(pubkey)
+					const balanceInfo =
+						await this.solanaServer.getTokenAccountBalance(pubkey)
 					results.push({
 						address: addr,
 						balance: Number(balanceInfo.value.uiAmount || 0),
@@ -262,11 +243,21 @@ export class HelperService {
 		}
 	}
 
+	private resolveContractId(queueKey: string): string | undefined {
+		const pendingItem = this.pendingWriteQueue.get(queueKey)
+		if (!pendingItem) return queueKey
+
+		if (pendingItem.type === 'SAVE_ESCROW') {
+			return (pendingItem.payload.contractId as string) || queueKey
+		}
+		return (pendingItem.payload.contractId as string) || queueKey
+	}
+
 	private async handlePendingWrite(
-		txHash: string,
+		queueKey: string,
 		responseHash: string,
 	): Promise<void> {
-		const pending = this.pendingWriteQueue.get(txHash)
+		const pending = this.pendingWriteQueue.get(queueKey)
 
 		if (!pending) return
 
@@ -275,7 +266,7 @@ export class HelperService {
 		} catch (err) {
 			console.error(`Error handling pending write:`, err)
 		} finally {
-			this.pendingWriteQueue.remove(txHash)
+			this.pendingWriteQueue.remove(queueKey)
 		}
 	}
 }
