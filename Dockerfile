@@ -15,8 +15,10 @@ COPY apps/server/ apps/server/
 # Install dependencies
 RUN bun install
 
-# Build server and rewrite path aliases
-RUN cd apps/server && bun run build && npx tsc-alias -p tsconfig.json
+# Build server
+RUN cd apps/server && rm -rf dist && bun run build \
+    && echo "=== BUILD VERIFICATION ===" \
+    && head -20 dist/auth/auth.service.js
 
 # Production stage
 FROM node:22-slim
