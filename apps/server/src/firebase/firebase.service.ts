@@ -5,7 +5,9 @@ import * as admin from 'firebase-admin';
 export class FirebaseService {
   private firestore: admin.firestore.Firestore;
 
-  serviceAccount = require('../../firebase-service-account.json');
+  serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT
+    ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
+    : require('../../firebase-service-account.json');
 
   onModuleInit() {
     if (!admin.apps.length) {
