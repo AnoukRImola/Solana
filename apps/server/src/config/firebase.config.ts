@@ -1,9 +1,9 @@
-import * as admin from 'firebase-admin'
+import * as admin from 'firebase-admin';
 
-const serviceAccount = require('../../my-firebase-service-config.json')
+const serviceAccount = require('../../firebase-service-account.json');
 
 admin.initializeApp({
-	credential: admin.credential.cert(serviceAccount),
-})
+  credential: admin.credential.cert(serviceAccount),
+});
 
-export const firestore = admin.firestore()
+export const firestore = admin.firestore();

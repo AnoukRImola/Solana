@@ -14,7 +14,7 @@ pub use utils::*;
 pub use instructions::*;
 
 #[cfg(not(feature = "dev"))]
-declare_id!("A2f8EQ1iYEFLkiN1UTDBkMYKR2Hxw7vqBb8srcVjGxk4");
+declare_id!("8LvnKBjEobkQGsu3SkzCGTwrZaXzMZh1X4Wj5ZGcmqwW");
 
 #[program]
 pub mod escrow {
