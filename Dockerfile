@@ -23,13 +23,14 @@ FROM node:22-slim
 
 WORKDIR /app
 
-# Copy built output and dependencies
+# Copy built output, config, and dependencies
 COPY --from=builder /app/apps/server/dist ./dist
+COPY --from=builder /app/apps/server/tsconfig.json ./tsconfig.json
+COPY --from=builder /app/apps/server/package.json ./package.json
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/programs/solana-tl ./programs/solana-tl
 COPY --from=builder /app/packages/allbridge ./packages/allbridge
-COPY --from=builder /app/apps/server/package.json ./package.json
 
 EXPOSE 3000
 
-CMD ["node", "dist/main.js"]
+CMD ["node", "-r", "tsconfig-paths/register", "dist/main.js"]
