@@ -43,6 +43,15 @@ __dev
 
 bun.lockb
 
+# deployment (personal infra)
+Dockerfile
+nixpacks.toml
+apps/server/nixpacks.toml
+
+# secrets
+firebase-service-account.json
+apps/server/firebase-service-account.json
+
 # smart-contract / build artifacts
 # Only accepting types and idl folders for solana programs
 **/target/debug
