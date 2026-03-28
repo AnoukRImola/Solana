@@ -44,7 +44,6 @@ __dev
 bun.lockb
 
 # deployment (personal infra)
-Dockerfile
 nixpacks.toml
 apps/server/nixpacks.toml
 
