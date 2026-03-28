@@ -1,5 +1,8 @@
 FROM oven/bun:1 AS builder
 
+# Cache buster - change to force rebuild
+ARG CACHEBUST=1
+
 WORKDIR /app
 
 # Copy monorepo root files
