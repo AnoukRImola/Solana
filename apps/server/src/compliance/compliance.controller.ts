@@ -11,6 +11,7 @@ import {
 import { AuthGuard } from '@nestjs/passport'
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger'
 import type { ApiResponse } from 'src/interfaces/response.interface'
+import { getServerKeypair } from 'src/config/constants/program.constant'
 import { ComplianceService } from './compliance.service'
 import { KytService } from './services/kyt.service'
 import { EscrowFirestoreService } from 'src/solana-contract/escrow/firestore-services/escrow-firestore.service'
@@ -96,7 +97,7 @@ export class ComplianceController {
 		try {
 			const result = await this.complianceService.verifyAddress(dto)
 			await this.kytService.logTransaction({
-				wallet: dto.signer,
+				wallet: getServerKeypair().publicKey.toBase58(),
 				action: 'VERIFY_ADDRESS',
 				metadata: {
 					address: dto.address,

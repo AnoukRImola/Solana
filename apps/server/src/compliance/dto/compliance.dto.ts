@@ -52,20 +52,10 @@ export class InitializeComplianceRegistryDto {
 	@ApiProperty()
 	@IsString()
 	@IsNotEmpty()
-	signer: string
-
-	@ApiProperty()
-	@IsString()
-	@IsNotEmpty()
 	travelRuleThreshold: string
 }
 
 export class VerifyAddressDto {
-	@ApiProperty()
-	@IsString()
-	@IsNotEmpty()
-	signer: string
-
 	@ApiProperty()
 	@IsString()
 	@IsNotEmpty()
