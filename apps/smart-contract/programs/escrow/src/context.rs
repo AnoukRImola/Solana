@@ -45,7 +45,11 @@ pub struct FundEscrow<'info> {
     )]
     pub escrow_token_account: Account<'info, TokenAccount>,
 
-    #[account(mut)]
+    #[account(
+        mut,
+        token::mint = escrow_token_account.mint,
+        token::authority = signer
+    )]
     pub user_token_account: Account<'info, TokenAccount>,
 
     pub token_program: Program<'info, Token>,
@@ -232,7 +236,11 @@ pub struct FundMultiReleaseEscrow<'info> {
     )]
     pub escrow_token_account: Account<'info, TokenAccount>,
 
-    #[account(mut)]
+    #[account(
+        mut,
+        token::mint = escrow_token_account.mint,
+        token::authority = signer
+    )]
     pub user_token_account: Account<'info, TokenAccount>,
 
     pub token_program: Program<'info, Token>,
@@ -391,6 +399,21 @@ pub struct InitializeComplianceRegistry<'info> {
     pub authority: Signer<'info>,
 
     pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct CloseComplianceRegistry<'info> {
+    #[account(mut)]
+    pub authority: Signer<'info>,
+
+    #[account(
+        mut,
+        seeds = [b"compliance_registry"],
+        bump,
+        constraint = registry.authority == authority.key() @ EscrowError::OnlyComplianceAuthority,
+        close = authority
+    )]
+    pub registry: Account<'info, ComplianceRegistry>,
 }
 
 #[derive(Accounts)]

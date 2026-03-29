@@ -9,9 +9,8 @@ import { JwtPayload } from '../interfaces/jwt-payload.interface'
 export class JwtStrategy extends PassportStrategy(Strategy) {
 	constructor(private readonly firebaseService: FirebaseService) {
 		super({
-			secretOrKey: process.env.JWT_SECRET,
+			secretOrKey: process.env.JWT_SECRET || '',
 			jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-			passReqToCallback: undefined,
 		})
 	}
 

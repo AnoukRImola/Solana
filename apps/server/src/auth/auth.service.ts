@@ -32,7 +32,7 @@ export class AuthService {
 			return []
 		}
 
-		const documents = []
+		const documents: { id: string; [key: string]: any }[] = []
 		snapshot.forEach((doc) => {
 			documents.push({ id: doc.id, ...doc.data() })
 		})
@@ -76,16 +76,23 @@ export class AuthService {
 		const usersCollection = firestore.collection('users')
 		const user = await usersCollection.doc(wallet).get()
 
-		console.log('user:', user.data())
+		let userData: Record<string, any>
 
-		if (user.data() === undefined)
-			throw new UnauthorizedException('User are not registered')
-
-		console.log({ wallet: user.data().address })
+		if (user.data() === undefined) {
+			// Auto-register new wallets
+			userData = {
+				wallet,
+				address: wallet,
+				createdAt: new Date().toISOString(),
+			}
+			await usersCollection.doc(wallet).set(userData)
+		} else {
+			userData = user.data()!
+		}
 
 		const data = {
-			...user.data(),
-			token: this.getJwtToken({ wallet: user.data().address }),
+			...userData,
+			token: this.getJwtToken({ wallet: userData.address || wallet }),
 		}
 
 		usersCollection.doc(wallet).update({

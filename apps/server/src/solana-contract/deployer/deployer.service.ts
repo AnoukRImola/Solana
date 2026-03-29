@@ -1,21 +1,17 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common'
 import { BN } from '@coral-xyz/anchor'
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common'
 import {
-	Keypair,
-	PublicKey,
-	SystemProgram,
-} from '@solana/web3.js'
-import {
-	getAssociatedTokenAddress,
-	createAssociatedTokenAccountInstruction,
 	TOKEN_PROGRAM_ID,
+	createAssociatedTokenAccountInstruction,
+	getAssociatedTokenAddress,
 } from '@solana/spl-token'
+import { PublicKey } from '@solana/web3.js'
 import { apiConfig } from 'src/config/api.config'
 import {
-	getConnection,
-	getProgram,
 	deriveEscrowPda,
 	deriveMultiReleaseEscrowPda,
+	getConnection,
+	getProgram,
 } from 'src/config/constants/program.constant'
 import type { ApiResponse } from 'src/interfaces/response.interface'
 import { PendingWriteQueueService } from '../queue/pending-write-queue.service'
@@ -86,10 +82,9 @@ export class DeployerService {
 
 			const initIx = await program.methods
 				.initializeEscrow(escrowData)
-				.accounts({
+				.accountsPartial({
 					escrowAccount: escrowPda,
 					initializer: signer,
-					systemProgram: SystemProgram.programId,
 				})
 				.instruction()
 
@@ -188,10 +183,9 @@ export class DeployerService {
 
 			const initIx = await program.methods
 				.initializeMultiReleaseEscrow(escrowData)
-				.accounts({
+				.accountsPartial({
 					escrowAccount: escrowPda,
 					initializer: signer,
-					systemProgram: SystemProgram.programId,
 				})
 				.instruction()
 

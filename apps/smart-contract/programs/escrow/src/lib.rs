@@ -14,7 +14,7 @@ pub use utils::*;
 pub use instructions::*;
 
 #[cfg(not(feature = "dev"))]
-declare_id!("A2f8EQ1iYEFLkiN1UTDBkMYKR2Hxw7vqBb8srcVjGxk4");
+declare_id!("8LvnKBjEobkQGsu3SkzCGTwrZaXzMZh1X4Wj5ZGcmqwW");
 
 #[program]
 pub mod escrow {
@@ -165,6 +165,12 @@ pub mod escrow {
         travel_rule_threshold: u64,
     ) -> Result<()> {
         instructions::compliance::initialize_compliance_registry_handler(ctx, travel_rule_threshold)
+    }
+
+    pub fn close_compliance_registry(
+        ctx: Context<CloseComplianceRegistry>,
+    ) -> Result<()> {
+        instructions::compliance::close_compliance_registry_handler(ctx)
     }
 
     pub fn verify_address(

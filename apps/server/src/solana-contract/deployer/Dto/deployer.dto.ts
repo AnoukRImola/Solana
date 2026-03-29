@@ -1,3 +1,4 @@
+import { Type } from 'class-transformer'
 import {
 	IsArray,
 	IsNotEmpty,
@@ -5,7 +6,6 @@ import {
 	IsString,
 	ValidateNested,
 } from 'class-validator'
-import { Type } from 'class-transformer'
 import { IsAddressValid, IsAmountValid } from 'src/common/custom-validators'
 import { Milestone } from 'src/interfaces/milestone.interface'
 

@@ -2,8 +2,8 @@ import axios from 'axios'
 import type { ChangeMilestoneFlagPayload } from '~/@types/escrow.entity'
 import http from '~/core/config/axios/http'
 import {
-	signAndSerialize,
 	type WalletSignTransaction,
+	signAndSerialize,
 } from '~/lib/solana-wallet'
 
 export const changeMilestoneFlag = async (
@@ -32,7 +32,9 @@ export const changeMilestoneFlag = async (
 	} catch (error: unknown) {
 		if (axios.isAxiosError(error)) {
 			console.error('Axios Error:', error.response?.data || error.message)
-			throw new Error(error.response?.data?.message || 'Error changing milestone flag')
+			throw new Error(
+				error.response?.data?.message || 'Error changing milestone flag',
+			)
 		} else {
 			console.error('Unexpected Error:', error)
 			throw new Error('Unexpected error occurred')

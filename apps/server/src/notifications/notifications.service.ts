@@ -60,10 +60,10 @@ export class NotificationsService {
 		const HIGH_VALUE_THRESHOLD = 500 // ! ask: how many USDC?
 		for (const doc of snapshot.docs) {
 			const escrow = doc.data() as Escrow
-			if (escrow.amount > HIGH_VALUE_THRESHOLD) {
+			if (Number(escrow.amount) > HIGH_VALUE_THRESHOLD) {
 				// ! ask: amount or balance?
 				await createNotification(this.firebaseService, {
-					contractId: escrow.contractId,
+					contractId: escrow.contractId ?? '',
 					type: 'high_value_dispute',
 					title: 'High Value Escrow in Dispute',
 					message: `Escrow ${escrow.title} with value ${escrow.amount} is in dispute`,

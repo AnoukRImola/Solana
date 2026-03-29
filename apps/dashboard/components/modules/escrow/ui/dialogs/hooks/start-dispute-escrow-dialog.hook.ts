@@ -38,10 +38,13 @@ const useStartDisputeEscrowDialog = () => {
 		try {
 			if (!signTransaction) throw new Error('Wallet not connected')
 
-			const response = await startDispute({
-				contractId: selectedEscrow?.contractId,
-				signer: address,
-			}, signTransaction)
+			const response = await startDispute(
+				{
+					contractId: selectedEscrow?.contractId,
+					signer: address,
+				},
+				signTransaction,
+			)
 
 			setIsStartingDispute(false)
 

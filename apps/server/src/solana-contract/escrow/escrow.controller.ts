@@ -11,6 +11,8 @@ import {
 } from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport'
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger'
+import { KycGuard } from 'src/compliance/guards/kyc.guard'
+import { TravelRuleGuard } from 'src/compliance/guards/travel-rule.guard'
 import type {
 	ApiResponse,
 	EscrowCamelCaseResponse,
@@ -32,13 +34,13 @@ import {
 	EscrowDisputeResolutionDto,
 	EscrowOperationWithSignerDto,
 	GetEscrowByEngagementIdDto,
+	MultiReleaseDisputeResolutionDto,
 	MultiReleaseEscrowOperationDto,
 	MultiReleaseMilestoneApproveDto,
 	MultiReleaseMilestoneOperationDto,
 	MultiReleaseMilestoneStatusDto,
-	MultiReleaseDisputeResolutionDto,
-	WithdrawRemainingFundsDto,
 	UpdateEscrowDTO,
+	WithdrawRemainingFundsDto,
 } from './Dto/escrow.dto'
 import { EscrowService } from './escrow.service'
 
@@ -53,7 +55,7 @@ export class EscrowController {
 
 	@Post('fund-escrow')
 	@ApiFundEscrow()
-	@UseGuards(AuthGuard())
+	@UseGuards(AuthGuard(), KycGuard, TravelRuleGuard)
 	@ApiBearerAuth('jwt-auth')
 	async fundEscrow(
 		@Body() dto: EscrowOperationWithSignerDto,
@@ -71,7 +73,7 @@ export class EscrowController {
 	}
 
 	@Post('release-funds')
-	@UseGuards(AuthGuard())
+	@UseGuards(AuthGuard(), KycGuard)
 	@ApiBearerAuth('jwt-auth')
 	async releaseFunds(
 		@Body() dto: DistributeEscrowEarningsDto,
@@ -90,7 +92,7 @@ export class EscrowController {
 
 	@Post('resolving-disputes')
 	@ApiResolvingDisputesEscrow()
-	@UseGuards(AuthGuard())
+	@UseGuards(AuthGuard(), KycGuard)
 	@ApiBearerAuth('jwt-auth')
 	async resolvingDisputes(
 		@Body() dto: EscrowDisputeResolutionDto,
@@ -149,7 +151,7 @@ export class EscrowController {
 				contractId,
 				milestoneIndex,
 				newStatus,
-				newEvidence,
+				newEvidence ?? '',
 				serviceProvider,
 			)
 		} catch (error) {
@@ -227,7 +229,7 @@ export class EscrowController {
 	// ============================
 
 	@Post('multi-release/fund-escrow')
-	@UseGuards(AuthGuard())
+	@UseGuards(AuthGuard(), KycGuard, TravelRuleGuard)
 	@ApiBearerAuth('jwt-auth')
 	async fundMultiReleaseEscrow(
 		@Body() dto: MultiReleaseEscrowOperationDto,
@@ -260,7 +262,7 @@ export class EscrowController {
 				contractId,
 				milestoneIndex,
 				newStatus,
-				newEvidence,
+				newEvidence ?? '',
 				serviceProvider,
 			)
 		} catch (error) {
@@ -296,7 +298,7 @@ export class EscrowController {
 	}
 
 	@Post('multi-release/release-milestone-funds')
-	@UseGuards(AuthGuard())
+	@UseGuards(AuthGuard(), KycGuard)
 	@ApiBearerAuth('jwt-auth')
 	async releaseMilestoneFunds(
 		@Body() dto: MultiReleaseMilestoneOperationDto,
@@ -340,7 +342,7 @@ export class EscrowController {
 	}
 
 	@Post('multi-release/resolve-milestone-dispute')
-	@UseGuards(AuthGuard())
+	@UseGuards(AuthGuard(), KycGuard)
 	@ApiBearerAuth('jwt-auth')
 	async resolveMilestoneDispute(
 		@Body() dto: MultiReleaseDisputeResolutionDto,

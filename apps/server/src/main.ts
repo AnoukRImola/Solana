@@ -33,9 +33,11 @@ async function bootstrap() {
 		}),
 	)
 
-	// Enable CORS for all origins and methods
+	// Enable CORS
 	app.enableCors({
-		origin: true,
+		origin: process.env.ALLOWED_ORIGINS
+			? process.env.ALLOWED_ORIGINS.split(',')
+			: ['http://localhost:3000', 'http://localhost:3001'],
 		methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
 		credentials: true,
 	})

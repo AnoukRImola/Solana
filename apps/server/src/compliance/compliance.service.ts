@@ -1,39 +1,83 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common'
 import { BN } from '@coral-xyz/anchor'
-import { PublicKey, SystemProgram, Transaction } from '@solana/web3.js'
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common'
 import {
+	PublicKey,
+	Transaction,
+	sendAndConfirmTransaction,
+} from '@solana/web3.js'
+import {
+	deriveComplianceRegistryPda,
+	deriveEscrowCompliancePda,
+	deriveKycPda,
 	getConnection,
 	getProgram,
-	deriveComplianceRegistryPda,
-	deriveKycPda,
-	deriveEscrowCompliancePda,
+	getServerKeypair,
 } from 'src/config/constants/program.constant'
 import type { ApiResponse } from 'src/interfaces/response.interface'
 import type {
 	InitializeComplianceRegistryDto,
-	VerifyAddressDto,
 	RevokeVerificationDto,
 	SetEscrowComplianceDto,
 	SetTravelRuleDataDto,
+	VerifyAddressDto,
 } from './dto/compliance.dto'
 
 @Injectable()
 export class ComplianceService {
+	private readonly logger = new Logger(ComplianceService.name)
+
 	async initializeComplianceRegistry(
 		dto: InitializeComplianceRegistryDto,
 	): Promise<ApiResponse> {
 		try {
 			const program = getProgram()
 			const connection = getConnection()
-			const signerPubkey = new PublicKey(dto.signer)
+			const serverKeypair = getServerKeypair()
 			const [registryPda] = deriveComplianceRegistryPda()
 
 			const ix = await program.methods
 				.initializeComplianceRegistry(new BN(dto.travelRuleThreshold))
-				.accounts({
+				.accountsPartial({
+					registry: registryPda,
+					authority: serverKeypair.publicKey,
+				})
+				.instruction()
+
+			const { blockhash } = await connection.getLatestBlockhash()
+			const tx = new Transaction({
+				recentBlockhash: blockhash,
+				feePayer: serverKeypair.publicKey,
+			})
+			tx.add(ix)
+
+			const txHash = await sendAndConfirmTransaction(connection, tx, [
+				serverKeypair,
+			])
+
+			return {
+				status: 'SUCCESS',
+				txHash,
+			}
+		} catch (error) {
+			throw new HttpException(
+				{ status: HttpStatus.BAD_REQUEST, message: error.message },
+				HttpStatus.BAD_REQUEST,
+			)
+		}
+	}
+
+	async closeComplianceRegistry(signer: string): Promise<ApiResponse> {
+		try {
+			const program = getProgram()
+			const connection = getConnection()
+			const signerPubkey = new PublicKey(signer)
+			const [registryPda] = deriveComplianceRegistryPda()
+
+			const ix = await program.methods
+				.closeComplianceRegistry()
+				.accountsPartial({
 					registry: registryPda,
 					authority: signerPubkey,
-					systemProgram: SystemProgram.programId,
 				})
 				.instruction()
 
@@ -64,36 +108,44 @@ export class ComplianceService {
 		try {
 			const program = getProgram()
 			const connection = getConnection()
-			const signerPubkey = new PublicKey(dto.signer)
+			const serverKeypair = getServerKeypair()
 			const addressPubkey = new PublicKey(dto.address)
 			const [registryPda] = deriveComplianceRegistryPda()
 			const [verificationPda] = deriveKycPda(addressPubkey)
 
+			// Auto-initialize registry if it doesn't exist yet
+			const existingRegistry = await this.getComplianceRegistry()
+			if (!existingRegistry) {
+				this.logger.log('Compliance registry not found, initializing...')
+				await this.initializeComplianceRegistry({
+					travelRuleThreshold: '1000000',
+				})
+			}
+
 			const ix = await program.methods
 				.verifyAddress(dto.kycProvider, dto.jurisdiction, dto.riskScore)
-				.accounts({
-					authority: signerPubkey,
+				.accountsPartial({
+					authority: serverKeypair.publicKey,
 					registry: registryPda,
 					verification: verificationPda,
 					address: addressPubkey,
-					systemProgram: SystemProgram.programId,
 				})
 				.instruction()
 
 			const { blockhash } = await connection.getLatestBlockhash()
 			const tx = new Transaction({
 				recentBlockhash: blockhash,
-				feePayer: signerPubkey,
+				feePayer: serverKeypair.publicKey,
 			})
 			tx.add(ix)
 
-			const unsignedTx = tx
-				.serialize({ requireAllSignatures: false })
-				.toString('base64')
+			const txHash = await sendAndConfirmTransaction(connection, tx, [
+				serverKeypair,
+			])
 
 			return {
 				status: 'SUCCESS',
-				unsignedTransaction: unsignedTx,
+				txHash,
 			}
 		} catch (error) {
 			throw new HttpException(
@@ -114,7 +166,7 @@ export class ComplianceService {
 
 			const ix = await program.methods
 				.revokeVerification()
-				.accounts({
+				.accountsPartial({
 					authority: signerPubkey,
 					registry: registryPda,
 					verification: verificationPda,
@@ -144,9 +196,7 @@ export class ComplianceService {
 		}
 	}
 
-	async setEscrowCompliance(
-		dto: SetEscrowComplianceDto,
-	): Promise<ApiResponse> {
+	async setEscrowCompliance(dto: SetEscrowComplianceDto): Promise<ApiResponse> {
 		try {
 			const program = getProgram()
 			const connection = getConnection()
@@ -157,12 +207,11 @@ export class ComplianceService {
 
 			const ix = await program.methods
 				.setEscrowCompliance(dto.requiresKyc)
-				.accounts({
+				.accountsPartial({
 					authority: signerPubkey,
 					registry: registryPda,
 					compliance: compliancePda,
 					escrowAddress: escrowAddressPubkey,
-					systemProgram: SystemProgram.programId,
 				})
 				.instruction()
 
@@ -210,7 +259,7 @@ export class ComplianceService {
 
 			const ix = await program.methods
 				.setTravelRuleData(travelRule)
-				.accounts({
+				.accountsPartial({
 					authority: signerPubkey,
 					registry: registryPda,
 					compliance: compliancePda,

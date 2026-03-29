@@ -68,12 +68,15 @@ const useResolveDisputeEscrowDialog = ({
 		try {
 			if (!signTransaction) throw new Error('Wallet not connected')
 
-			const response = await resolveDispute({
-				contractId: selectedEscrow?.contractId,
-				disputeResolver: selectedEscrow?.disputeResolver,
-				approverFunds: payload.approverFunds,
-				receiverFunds: payload.receiverFunds,
-			}, signTransaction)
+			const response = await resolveDispute(
+				{
+					contractId: selectedEscrow?.contractId,
+					disputeResolver: selectedEscrow?.disputeResolver,
+					approverFunds: payload.approverFunds,
+					receiverFunds: payload.receiverFunds,
+				},
+				signTransaction,
+			)
 
 			if (response.status === 'SUCCESS') {
 				form.reset()

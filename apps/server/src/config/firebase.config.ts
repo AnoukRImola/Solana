@@ -1,6 +1,8 @@
 import * as admin from 'firebase-admin'
 
-const serviceAccount = require('../../my-firebase-service-config.json')
+const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT
+	? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
+	: require('../../firebase-service-account.json')
 
 admin.initializeApp({
 	credential: admin.credential.cert(serviceAccount),

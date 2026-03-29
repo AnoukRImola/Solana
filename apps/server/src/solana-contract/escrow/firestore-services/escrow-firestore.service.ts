@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common'
-import type { FirebaseService } from 'src/firebase/firebase.service'
+import { FirebaseService } from 'src/firebase/firebase.service'
 import type { Milestone } from 'src/interfaces/milestone.interface'
 import {
 	addEscrow,

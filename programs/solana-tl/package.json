@@ -2,7 +2,7 @@
 	"name": "@programs/solana-tl",
 	"version": "0.1.0",
 	"description": "Generated Solana program types and idl",
-	"main": "src/index.ts",
+	"main": "src/index.js",
 	"types": "src/index.ts",
 	"scripts": {},
 	"dependencies": {},

@@ -5,6 +5,7 @@ export interface ApiResponse {
 	status: string
 	unsignedTransaction?: string
 	unsignedConversionTransaction?: string
+	txHash?: string
 	message?: string
 	contract_id?: string
 	engagement_id?: string

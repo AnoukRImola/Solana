@@ -9,7 +9,7 @@ interface AuditLogEntry {
 	metadata?: Record<string, unknown>
 }
 
-interface SuspiciousActivityResult {
+export interface SuspiciousActivityResult {
 	isSuspicious: boolean
 	reasons: string[]
 	recentTxCount: number

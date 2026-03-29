@@ -2,8 +2,8 @@ use anchor_lang::prelude::*;
 
 use crate::{
     context::{
-        InitializeComplianceRegistry, VerifyAddress, RevokeVerification,
-        SetEscrowCompliance, SetTravelRuleData,
+        InitializeComplianceRegistry, CloseComplianceRegistry, VerifyAddress,
+        RevokeVerification, SetEscrowCompliance, SetTravelRuleData,
     },
     state::TravelRuleData,
     utils::{
@@ -29,6 +29,13 @@ pub fn initialize_compliance_registry_handler(
         travel_rule_threshold,
     });
 
+    Ok(())
+}
+
+pub fn close_compliance_registry_handler(
+    _ctx: Context<CloseComplianceRegistry>,
+) -> Result<()> {
+    // Account is closed by the `close = authority` constraint
     Ok(())
 }
 

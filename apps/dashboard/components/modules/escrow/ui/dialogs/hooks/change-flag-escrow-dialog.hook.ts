@@ -39,12 +39,15 @@ const useChangeFlagEscrowDialog = () => {
 		try {
 			if (!signTransaction) throw new Error('Wallet not connected')
 
-			const response = await changeMilestoneFlag({
-				contractId: selectedEscrow?.contractId,
-				milestoneIndex: index.toString(),
-				newFlag: true,
-				approver: address,
-			}, signTransaction)
+			const response = await changeMilestoneFlag(
+				{
+					contractId: selectedEscrow?.contractId,
+					milestoneIndex: index.toString(),
+					newFlag: true,
+					approver: address,
+				},
+				signTransaction,
+			)
 
 			if (response.status === 'SUCCESS') {
 				setIsChangingStatus(false)
