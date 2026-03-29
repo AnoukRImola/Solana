@@ -1,3 +1,3 @@
-export type * from "../target/types/escrow";
+export type * from '../target/types/escrow'
 
-export declare const EscrowIDL: Record<string, unknown>;
+export declare const EscrowIDL: Record<string, unknown>

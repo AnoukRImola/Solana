@@ -1,6 +1,9 @@
 import { useCallback } from 'react'
+import type {
+	RequestApiKeyParams,
+	RequestApiKeyResponse,
+} from '../../types/auth.types'
 import { useTrustlessWork } from '../context'
-import type { RequestApiKeyParams, RequestApiKeyResponse } from '../../types/auth.types'
 
 export function useRequestApiKey() {
 	const tw = useTrustlessWork()

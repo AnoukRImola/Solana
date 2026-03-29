@@ -29,4 +29,4 @@ import { SolanaContractModule } from './solana-contract/solana-contract.module'
 		},
 	],
 })
-export class AppModule { }
+export class AppModule {}

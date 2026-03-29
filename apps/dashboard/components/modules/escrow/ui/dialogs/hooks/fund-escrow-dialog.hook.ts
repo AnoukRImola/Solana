@@ -78,11 +78,14 @@ const useFundEscrowDialog = ({
 				throw new Error('Wallet not connected')
 			}
 
-			const response = await fundEscrow({
-				signer: address,
-				amount: payload.amount,
-				contractId: selectedEscrow!.contractId,
-			}, signTransaction)
+			const response = await fundEscrow(
+				{
+					signer: address,
+					amount: payload.amount,
+					contractId: selectedEscrow!.contractId,
+				},
+				signTransaction,
+			)
 
 			if (response.status === 'SUCCESS' || response.status === 201) {
 				form.reset()

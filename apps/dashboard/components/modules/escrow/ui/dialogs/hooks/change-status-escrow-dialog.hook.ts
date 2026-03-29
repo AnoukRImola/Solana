@@ -60,13 +60,16 @@ const useChangeMilestoneStatusDialogHook = ({
 		try {
 			if (!signTransaction) throw new Error('Wallet not connected')
 
-			const response = await changeMilestoneStatus({
-				contractId: selectedEscrow?.contractId,
-				milestoneIndex: milestoneIndex?.toString() || '0',
-				newStatus: 'completed',
-				serviceProvider: address,
-				newEvidence: evidence,
-			}, signTransaction)
+			const response = await changeMilestoneStatus(
+				{
+					contractId: selectedEscrow?.contractId,
+					milestoneIndex: milestoneIndex?.toString() || '0',
+					newStatus: 'completed',
+					serviceProvider: address,
+					newEvidence: evidence,
+				},
+				signTransaction,
+			)
 
 			if (response.status === 'SUCCESS') {
 				setIsChangingStatus(false)

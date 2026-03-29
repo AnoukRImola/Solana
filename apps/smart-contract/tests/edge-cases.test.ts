@@ -1,13 +1,13 @@
 import * as anchor from '@coral-xyz/anchor'
-import { EscrowIDL, type Escrow } from '@programs/solana-tl'
-import { Keypair, PublicKey, SystemProgram } from '@solana/web3.js'
+import { type Escrow, EscrowIDL } from '@programs/solana-tl'
 import {
+	TOKEN_PROGRAM_ID,
 	createMint,
 	createAccount as createTokenAccount,
-	mintTo,
 	getAccount,
-	TOKEN_PROGRAM_ID,
+	mintTo,
 } from '@solana/spl-token'
+import { Keypair, PublicKey, SystemProgram } from '@solana/web3.js'
 import { assert } from 'chai'
 
 describe('Escrow Program - Edge Cases', () => {
@@ -71,7 +71,10 @@ describe('Escrow Program - Edge Cases', () => {
 		approvedFlag: false,
 	})
 
-	const createEscrowSetup = async (engagementSuffix: string, amount: number) => {
+	const createEscrowSetup = async (
+		engagementSuffix: string,
+		amount: number,
+	) => {
 		const engagementId = `eng-edge-${engagementSuffix}-${Date.now()}`
 		const [escrowPda] = PublicKey.findProgramAddressSync(
 			[Buffer.from('escrow'), Buffer.from(engagementId)],
@@ -114,8 +117,12 @@ describe('Escrow Program - Edge Cases', () => {
 
 	describe('Funding edge cases', () => {
 		it('should fail to fund with amount exceeding escrow amount', async () => {
-			const { engagementId, escrowPda, escrowTokenAccount, funderTokenAccount } =
-				await createEscrowSetup('overfund', 5_000_000)
+			const {
+				engagementId,
+				escrowPda,
+				escrowTokenAccount,
+				funderTokenAccount,
+			} = await createEscrowSetup('overfund', 5_000_000)
 
 			await program.methods
 				.initializeEscrow({
@@ -150,15 +157,21 @@ describe('Escrow Program - Edge Cases', () => {
 						tokenProgram: TOKEN_PROGRAM_ID,
 					})
 					.rpc()
-				assert.fail('Should have thrown AmountToDepositGreatherThanEscrowAmount')
+				assert.fail(
+					'Should have thrown AmountToDepositGreatherThanEscrowAmount',
+				)
 			} catch (err: any) {
 				assert.include(err.message, 'AmountToDepositGreatherThanEscrowAmount')
 			}
 		})
 
 		it('should fail to fund an unfunded escrow with zero deposit', async () => {
-			const { engagementId, escrowPda, escrowTokenAccount, funderTokenAccount } =
-				await createEscrowSetup('zerofund', 1_000_000)
+			const {
+				engagementId,
+				escrowPda,
+				escrowTokenAccount,
+				funderTokenAccount,
+			} = await createEscrowSetup('zerofund', 1_000_000)
 
 			await program.methods
 				.initializeEscrow({
@@ -206,14 +219,36 @@ describe('Escrow Program - Edge Cases', () => {
 
 	describe('Release edge cases', () => {
 		it('should fail to release when not all milestones are approved', async () => {
-			const { engagementId, escrowPda, escrowTokenAccount, funderTokenAccount } =
-				await createEscrowSetup('norelease', 1_000_000)
+			const {
+				engagementId,
+				escrowPda,
+				escrowTokenAccount,
+				funderTokenAccount,
+			} = await createEscrowSetup('norelease', 1_000_000)
 
 			const payer = (provider.wallet as anchor.Wallet).payer
 
-			const receiverTA = await createTokenAccount(connection, payer, mint, receiver.publicKey, Keypair.generate())
-			const platformTA = await createTokenAccount(connection, payer, mint, platform.publicKey, Keypair.generate())
-			const twTA = await createTokenAccount(connection, payer, mint, trustlessWorkWallet.publicKey, Keypair.generate())
+			const receiverTA = await createTokenAccount(
+				connection,
+				payer,
+				mint,
+				receiver.publicKey,
+				Keypair.generate(),
+			)
+			const platformTA = await createTokenAccount(
+				connection,
+				payer,
+				mint,
+				platform.publicKey,
+				Keypair.generate(),
+			)
+			const twTA = await createTokenAccount(
+				connection,
+				payer,
+				mint,
+				trustlessWorkWallet.publicKey,
+				Keypair.generate(),
+			)
 
 			await program.methods
 				.initializeEscrow({
@@ -279,14 +314,36 @@ describe('Escrow Program - Edge Cases', () => {
 		})
 
 		it('should fail when non-release-signer tries to release', async () => {
-			const { engagementId, escrowPda, escrowTokenAccount, funderTokenAccount } =
-				await createEscrowSetup('wrongsigner', 1_000_000)
+			const {
+				engagementId,
+				escrowPda,
+				escrowTokenAccount,
+				funderTokenAccount,
+			} = await createEscrowSetup('wrongsigner', 1_000_000)
 
 			const payer = (provider.wallet as anchor.Wallet).payer
 
-			const receiverTA = await createTokenAccount(connection, payer, mint, receiver.publicKey, Keypair.generate())
-			const platformTA = await createTokenAccount(connection, payer, mint, platform.publicKey, Keypair.generate())
-			const twTA = await createTokenAccount(connection, payer, mint, trustlessWorkWallet.publicKey, Keypair.generate())
+			const receiverTA = await createTokenAccount(
+				connection,
+				payer,
+				mint,
+				receiver.publicKey,
+				Keypair.generate(),
+			)
+			const platformTA = await createTokenAccount(
+				connection,
+				payer,
+				mint,
+				platform.publicKey,
+				Keypair.generate(),
+			)
+			const twTA = await createTokenAccount(
+				connection,
+				payer,
+				mint,
+				trustlessWorkWallet.publicKey,
+				Keypair.generate(),
+			)
 
 			await program.methods
 				.initializeEscrow({
@@ -348,8 +405,12 @@ describe('Escrow Program - Edge Cases', () => {
 
 	describe('Dispute edge cases', () => {
 		it('should fail when unauthorized user starts dispute', async () => {
-			const { engagementId, escrowPda, escrowTokenAccount, funderTokenAccount } =
-				await createEscrowSetup('unauthdispute', 1_000_000)
+			const {
+				engagementId,
+				escrowPda,
+				escrowTokenAccount,
+				funderTokenAccount,
+			} = await createEscrowSetup('unauthdispute', 1_000_000)
 
 			await program.methods
 				.initializeEscrow({
@@ -389,15 +450,43 @@ describe('Escrow Program - Edge Cases', () => {
 		})
 
 		it('should fail to resolve dispute by non-dispute-resolver', async () => {
-			const { engagementId, escrowPda, escrowTokenAccount, funderTokenAccount } =
-				await createEscrowSetup('wrongresolver', 1_000_000)
+			const {
+				engagementId,
+				escrowPda,
+				escrowTokenAccount,
+				funderTokenAccount,
+			} = await createEscrowSetup('wrongresolver', 1_000_000)
 
 			const payer = (provider.wallet as anchor.Wallet).payer
 
-			const approverTA = await createTokenAccount(connection, payer, mint, approver.publicKey, Keypair.generate())
-			const spTA = await createTokenAccount(connection, payer, mint, serviceProvider.publicKey, Keypair.generate())
-			const platformTA = await createTokenAccount(connection, payer, mint, platform.publicKey, Keypair.generate())
-			const twTA = await createTokenAccount(connection, payer, mint, trustlessWorkWallet.publicKey, Keypair.generate())
+			const approverTA = await createTokenAccount(
+				connection,
+				payer,
+				mint,
+				approver.publicKey,
+				Keypair.generate(),
+			)
+			const spTA = await createTokenAccount(
+				connection,
+				payer,
+				mint,
+				serviceProvider.publicKey,
+				Keypair.generate(),
+			)
+			const platformTA = await createTokenAccount(
+				connection,
+				payer,
+				mint,
+				platform.publicKey,
+				Keypair.generate(),
+			)
+			const twTA = await createTokenAccount(
+				connection,
+				payer,
+				mint,
+				trustlessWorkWallet.publicKey,
+				Keypair.generate(),
+			)
 
 			await program.methods
 				.initializeEscrow({
@@ -463,15 +552,43 @@ describe('Escrow Program - Edge Cases', () => {
 		})
 
 		it('should fail to resolve dispute when escrow is not in dispute', async () => {
-			const { engagementId, escrowPda, escrowTokenAccount, funderTokenAccount } =
-				await createEscrowSetup('nodispute', 1_000_000)
+			const {
+				engagementId,
+				escrowPda,
+				escrowTokenAccount,
+				funderTokenAccount,
+			} = await createEscrowSetup('nodispute', 1_000_000)
 
 			const payer = (provider.wallet as anchor.Wallet).payer
 
-			const approverTA = await createTokenAccount(connection, payer, mint, approver.publicKey, Keypair.generate())
-			const spTA = await createTokenAccount(connection, payer, mint, serviceProvider.publicKey, Keypair.generate())
-			const platformTA = await createTokenAccount(connection, payer, mint, platform.publicKey, Keypair.generate())
-			const twTA = await createTokenAccount(connection, payer, mint, trustlessWorkWallet.publicKey, Keypair.generate())
+			const approverTA = await createTokenAccount(
+				connection,
+				payer,
+				mint,
+				approver.publicKey,
+				Keypair.generate(),
+			)
+			const spTA = await createTokenAccount(
+				connection,
+				payer,
+				mint,
+				serviceProvider.publicKey,
+				Keypair.generate(),
+			)
+			const platformTA = await createTokenAccount(
+				connection,
+				payer,
+				mint,
+				platform.publicKey,
+				Keypair.generate(),
+			)
+			const twTA = await createTokenAccount(
+				connection,
+				payer,
+				mint,
+				trustlessWorkWallet.publicKey,
+				Keypair.generate(),
+			)
 
 			await program.methods
 				.initializeEscrow({
@@ -632,8 +749,12 @@ describe('Escrow Program - Edge Cases', () => {
 
 	describe('Property change edge cases', () => {
 		it('should fail to change properties after milestone approved', async () => {
-			const { engagementId, escrowPda, escrowTokenAccount, funderTokenAccount } =
-				await createEscrowSetup('propsapproved', 1_000_000)
+			const {
+				engagementId,
+				escrowPda,
+				escrowTokenAccount,
+				funderTokenAccount,
+			} = await createEscrowSetup('propsapproved', 1_000_000)
 
 			await program.methods
 				.initializeEscrow({
@@ -700,9 +821,14 @@ describe('Escrow Program - Edge Cases', () => {
 					})
 					.signers([platform])
 					.rpc()
-				assert.fail('Should have thrown MilestoneApprovedCantChangeEscrowProperties')
+				assert.fail(
+					'Should have thrown MilestoneApprovedCantChangeEscrowProperties',
+				)
 			} catch (err: any) {
-				assert.include(err.message, 'MilestoneApprovedCantChangeEscrowProperties')
+				assert.include(
+					err.message,
+					'MilestoneApprovedCantChangeEscrowProperties',
+				)
 			}
 		})
 	})
@@ -713,8 +839,10 @@ describe('Escrow Program - Edge Cases', () => {
 
 	describe('Milestone edge cases', () => {
 		it('should fail to approve milestone that is not completed', async () => {
-			const { engagementId, escrowPda } =
-				await createEscrowSetup('notcompleted', 1_000_000)
+			const { engagementId, escrowPda } = await createEscrowSetup(
+				'notcompleted',
+				1_000_000,
+			)
 
 			await program.methods
 				.initializeEscrow({
@@ -755,8 +883,10 @@ describe('Escrow Program - Edge Cases', () => {
 		})
 
 		it('should fail with out-of-bounds milestone index on flag change', async () => {
-			const { engagementId, escrowPda } =
-				await createEscrowSetup('oobflag', 1_000_000)
+			const { engagementId, escrowPda } = await createEscrowSetup(
+				'oobflag',
+				1_000_000,
+			)
 
 			await program.methods
 				.initializeEscrow({

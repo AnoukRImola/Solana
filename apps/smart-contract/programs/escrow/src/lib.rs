@@ -167,6 +167,12 @@ pub mod escrow {
         instructions::compliance::initialize_compliance_registry_handler(ctx, travel_rule_threshold)
     }
 
+    pub fn close_compliance_registry(
+        ctx: Context<CloseComplianceRegistry>,
+    ) -> Result<()> {
+        instructions::compliance::close_compliance_registry_handler(ctx)
+    }
+
     pub fn verify_address(
         ctx: Context<VerifyAddress>,
         kyc_provider: String,

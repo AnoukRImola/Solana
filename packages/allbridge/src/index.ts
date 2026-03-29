@@ -130,7 +130,10 @@ class AllbridgeService {
 			messenger: Messenger.ALLBRIDGE,
 		}
 
-		let tx: RawBridgeSolanaTransaction | RawEvmTransaction | RawTronTransaction = null
+		let tx:
+			| RawBridgeSolanaTransaction
+			| RawEvmTransaction
+			| RawTronTransaction = null
 
 		switch (walletType) {
 			case 'evm': {

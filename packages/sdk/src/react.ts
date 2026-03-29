@@ -1,4 +1,7 @@
-export { TrustlessWorkConfig, type TrustlessWorkConfigProps } from './react/provider'
+export {
+	TrustlessWorkConfig,
+	type TrustlessWorkConfigProps,
+} from './react/provider'
 export { useTrustlessWork } from './react/context'
 export * from './react/hooks'
 

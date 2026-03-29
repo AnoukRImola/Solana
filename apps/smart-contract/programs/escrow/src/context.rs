@@ -402,6 +402,21 @@ pub struct InitializeComplianceRegistry<'info> {
 }
 
 #[derive(Accounts)]
+pub struct CloseComplianceRegistry<'info> {
+    #[account(mut)]
+    pub authority: Signer<'info>,
+
+    #[account(
+        mut,
+        seeds = [b"compliance_registry"],
+        bump,
+        constraint = registry.authority == authority.key() @ EscrowError::OnlyComplianceAuthority,
+        close = authority
+    )]
+    pub registry: Account<'info, ComplianceRegistry>,
+}
+
+#[derive(Accounts)]
 pub struct VerifyAddress<'info> {
     #[account(mut)]
     pub authority: Signer<'info>,

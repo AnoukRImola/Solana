@@ -1,5 +1,5 @@
 import * as anchor from '@coral-xyz/anchor'
-import { EscrowIDL, type Escrow } from '@programs/solana-tl'
+import { type Escrow, EscrowIDL } from '@programs/solana-tl'
 import { Keypair, PublicKey, SystemProgram } from '@solana/web3.js'
 import { assert } from 'chai'
 
@@ -46,10 +46,7 @@ describe('Escrow Program - Compliance Layer', () => {
 			program.programId,
 		)
 		;[compliancePda, complianceBump] = PublicKey.findProgramAddressSync(
-			[
-				Buffer.from('escrow_compliance'),
-				escrowAddress.publicKey.toBuffer(),
-			],
+			[Buffer.from('escrow_compliance'), escrowAddress.publicKey.toBuffer()],
 			program.programId,
 		)
 	})
@@ -70,9 +67,8 @@ describe('Escrow Program - Compliance Layer', () => {
 				.signers([authority])
 				.rpc()
 
-			const registry = await program.account.complianceRegistry.fetch(
-				registryPda,
-			)
+			const registry =
+				await program.account.complianceRegistry.fetch(registryPda)
 			assert.ok(registry.authority.equals(authority.publicKey))
 			assert.ok(registry.travelRuleThreshold.eq(travelRuleThreshold))
 			assert.isTrue(registry.isInitialized)
@@ -330,9 +326,8 @@ describe('Escrow Program - Compliance Layer', () => {
 				.signers([authority])
 				.rpc()
 
-			const compliance = await program.account.escrowCompliance.fetch(
-				compliancePda,
-			)
+			const compliance =
+				await program.account.escrowCompliance.fetch(compliancePda)
 			assert.ok(compliance.escrowAddress.equals(escrowAddress.publicKey))
 			assert.isTrue(compliance.requiresKyc)
 			assert.isNull(compliance.travelRule)
@@ -341,10 +336,7 @@ describe('Escrow Program - Compliance Layer', () => {
 		it('should fail if caller is not the compliance authority', async () => {
 			const anotherEscrow = Keypair.generate()
 			const [anotherCompliancePda] = PublicKey.findProgramAddressSync(
-				[
-					Buffer.from('escrow_compliance'),
-					anotherEscrow.publicKey.toBuffer(),
-				],
+				[Buffer.from('escrow_compliance'), anotherEscrow.publicKey.toBuffer()],
 				program.programId,
 			)
 
@@ -393,26 +385,13 @@ describe('Escrow Program - Compliance Layer', () => {
 				.signers([authority])
 				.rpc()
 
-			const compliance = await program.account.escrowCompliance.fetch(
-				compliancePda,
-			)
+			const compliance =
+				await program.account.escrowCompliance.fetch(compliancePda)
 			assert.isNotNull(compliance.travelRule)
-			assert.equal(
-				compliance.travelRule.originatorName,
-				'Alice Corp',
-			)
-			assert.equal(
-				compliance.travelRule.beneficiaryName,
-				'Bob Inc',
-			)
-			assert.equal(
-				compliance.travelRule.originatorJurisdiction,
-				'US',
-			)
-			assert.equal(
-				compliance.travelRule.beneficiaryJurisdiction,
-				'GB',
-			)
+			assert.equal(compliance.travelRule.originatorName, 'Alice Corp')
+			assert.equal(compliance.travelRule.beneficiaryName, 'Bob Inc')
+			assert.equal(compliance.travelRule.originatorJurisdiction, 'US')
+			assert.equal(compliance.travelRule.beneficiaryJurisdiction, 'GB')
 			assert.equal(
 				compliance.travelRule.transferPurpose,
 				'Service payment for software development',

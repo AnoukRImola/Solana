@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/escrow.json`.
  */
 export type Escrow = {
-  "address": "A2f8EQ1iYEFLkiN1UTDBkMYKR2Hxw7vqBb8srcVjGxk4",
+  "address": "8LvnKBjEobkQGsu3SkzCGTwrZaXzMZh1X4Wj5ZGcmqwW",
   "metadata": {
     "name": "escrow",
     "version": "0.1.0",
@@ -358,6 +358,59 @@ export type Escrow = {
           }
         }
       ]
+    },
+    {
+      "name": "closeComplianceRegistry",
+      "discriminator": [
+        168,
+        80,
+        61,
+        103,
+        65,
+        103,
+        133,
+        135
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "registry",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  109,
+                  112,
+                  108,
+                  105,
+                  97,
+                  110,
+                  99,
+                  101,
+                  95,
+                  114,
+                  101,
+                  103,
+                  105,
+                  115,
+                  116,
+                  114,
+                  121
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
     },
     {
       "name": "disputeMilestone",

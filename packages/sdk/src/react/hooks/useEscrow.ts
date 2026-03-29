@@ -1,16 +1,16 @@
 import { useCallback } from 'react'
-import { useTrustlessWork } from '../context'
 import type { ApiResponse, EscrowData } from '../../types/common.types'
 import type {
-	FundEscrowParams,
-	ReleaseFundsParams,
-	ResolveDisputeParams,
+	ChangeDisputeFlagParams,
 	ChangeMilestoneApprovedFlagParams,
 	ChangeMilestoneStatusParams,
-	ChangeDisputeFlagParams,
-	UpdateEscrowParams,
+	FundEscrowParams,
 	GetEscrowParams,
+	ReleaseFundsParams,
+	ResolveDisputeParams,
+	UpdateEscrowParams,
 } from '../../types/escrow.types'
+import { useTrustlessWork } from '../context'
 
 export function useFundEscrow() {
 	const tw = useTrustlessWork()

@@ -1,23 +1,25 @@
 import type { AxiosInstance } from 'axios'
 import type { ApiResponse } from '../../types/common.types'
 import type {
+	GetAuditLogsParams,
+	GetEscrowComplianceParams,
+	GetEscrowsByEngagementParams,
+	GetEscrowsByRoleParams,
+	GetEscrowsBySignerParams,
+	GetSuspiciousActivityParams,
+	GetVerificationParams,
 	InitializeRegistryParams,
-	VerifyAddressParams,
 	RevokeVerificationParams,
 	SetEscrowComplianceParams,
 	SetTravelRuleDataParams,
-	GetVerificationParams,
-	GetEscrowComplianceParams,
-	GetEscrowsBySignerParams,
-	GetEscrowsByRoleParams,
-	GetEscrowsByEngagementParams,
-	GetAuditLogsParams,
-	GetSuspiciousActivityParams,
+	VerifyAddressParams,
 } from '../../types/compliance.types'
 
 export function createComplianceModule(http: AxiosInstance) {
 	return {
-		async initializeRegistry(params: InitializeRegistryParams): Promise<ApiResponse> {
+		async initializeRegistry(
+			params: InitializeRegistryParams,
+		): Promise<ApiResponse> {
 			const { data } = await http.post<ApiResponse>(
 				'/compliance/initialize-registry',
 				params,
@@ -33,7 +35,9 @@ export function createComplianceModule(http: AxiosInstance) {
 			return data
 		},
 
-		async revokeVerification(params: RevokeVerificationParams): Promise<ApiResponse> {
+		async revokeVerification(
+			params: RevokeVerificationParams,
+		): Promise<ApiResponse> {
 			const { data } = await http.post<ApiResponse>(
 				'/compliance/revoke-verification',
 				params,
@@ -41,7 +45,9 @@ export function createComplianceModule(http: AxiosInstance) {
 			return data
 		},
 
-		async setEscrowCompliance(params: SetEscrowComplianceParams): Promise<ApiResponse> {
+		async setEscrowCompliance(
+			params: SetEscrowComplianceParams,
+		): Promise<ApiResponse> {
 			const { data } = await http.post<ApiResponse>(
 				'/compliance/set-escrow-compliance',
 				params,
@@ -49,7 +55,9 @@ export function createComplianceModule(http: AxiosInstance) {
 			return data
 		},
 
-		async setTravelRuleData(params: SetTravelRuleDataParams): Promise<ApiResponse> {
+		async setTravelRuleData(
+			params: SetTravelRuleDataParams,
+		): Promise<ApiResponse> {
 			const { data } = await http.post<ApiResponse>(
 				'/compliance/set-travel-rule-data',
 				params,
@@ -67,8 +75,12 @@ export function createComplianceModule(http: AxiosInstance) {
 			return data
 		},
 
-		async getEscrowCompliance(params: GetEscrowComplianceParams): Promise<unknown> {
-			const { data } = await http.get('/compliance/escrow-compliance', { params })
+		async getEscrowCompliance(
+			params: GetEscrowComplianceParams,
+		): Promise<unknown> {
+			const { data } = await http.get('/compliance/escrow-compliance', {
+				params,
+			})
 			return data
 		},
 
@@ -77,13 +89,21 @@ export function createComplianceModule(http: AxiosInstance) {
 			return data
 		},
 
-		async getSuspiciousActivity(params: GetSuspiciousActivityParams): Promise<unknown> {
-			const { data } = await http.get('/compliance/suspicious-activity', { params })
+		async getSuspiciousActivity(
+			params: GetSuspiciousActivityParams,
+		): Promise<unknown> {
+			const { data } = await http.get('/compliance/suspicious-activity', {
+				params,
+			})
 			return data
 		},
 
-		async getEscrowsBySigner(params: GetEscrowsBySignerParams): Promise<unknown> {
-			const { data } = await http.get('/compliance/escrows/by-signer', { params })
+		async getEscrowsBySigner(
+			params: GetEscrowsBySignerParams,
+		): Promise<unknown> {
+			const { data } = await http.get('/compliance/escrows/by-signer', {
+				params,
+			})
 			return data
 		},
 
@@ -92,8 +112,12 @@ export function createComplianceModule(http: AxiosInstance) {
 			return data
 		},
 
-		async getEscrowsByEngagement(params: GetEscrowsByEngagementParams): Promise<unknown> {
-			const { data } = await http.get('/compliance/escrows/by-engagement', { params })
+		async getEscrowsByEngagement(
+			params: GetEscrowsByEngagementParams,
+		): Promise<unknown> {
+			const { data } = await http.get('/compliance/escrows/by-engagement', {
+				params,
+			})
 			return data
 		},
 	}

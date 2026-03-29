@@ -41,12 +41,15 @@ const useDistributeEarningsEscrowDialog = () => {
 		try {
 			if (!signTransaction) throw new Error('Wallet not connected')
 
-			const response = await distributeEscrowEarnings({
-				contractId: selectedEscrow?.contractId,
-				signer: address,
-				serviceProvider: selectedEscrow?.serviceProvider,
-				releaseSigner: selectedEscrow?.releaseSigner,
-			}, signTransaction)
+			const response = await distributeEscrowEarnings(
+				{
+					contractId: selectedEscrow?.contractId,
+					signer: address,
+					serviceProvider: selectedEscrow?.serviceProvider,
+					releaseSigner: selectedEscrow?.releaseSigner,
+				},
+				signTransaction,
+			)
 
 			if (response.status === 'SUCCESS') {
 				setIsSuccessReleaseDialogOpen(true)

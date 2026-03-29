@@ -37,7 +37,10 @@ export class KycGuard implements CanActivate {
 		} catch (error) {
 			if (error instanceof ForbiddenException) throw error
 			// If compliance service fails (e.g. RPC error), allow but log
-			console.error('KycGuard: Error checking KYC status, allowing request:', error.message)
+			console.error(
+				'KycGuard: Error checking KYC status, allowing request:',
+				error.message,
+			)
 			return true
 		}
 	}

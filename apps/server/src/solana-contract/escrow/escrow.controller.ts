@@ -34,13 +34,13 @@ import {
 	EscrowDisputeResolutionDto,
 	EscrowOperationWithSignerDto,
 	GetEscrowByEngagementIdDto,
+	MultiReleaseDisputeResolutionDto,
 	MultiReleaseEscrowOperationDto,
 	MultiReleaseMilestoneApproveDto,
 	MultiReleaseMilestoneOperationDto,
 	MultiReleaseMilestoneStatusDto,
-	MultiReleaseDisputeResolutionDto,
-	WithdrawRemainingFundsDto,
 	UpdateEscrowDTO,
+	WithdrawRemainingFundsDto,
 } from './Dto/escrow.dto'
 import { EscrowService } from './escrow.service'
 

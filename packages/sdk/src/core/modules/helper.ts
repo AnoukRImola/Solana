@@ -1,10 +1,10 @@
 import type { AxiosInstance } from 'axios'
 import type { ApiResponse } from '../../types/common.types'
 import type {
+	BalanceItem,
+	GetMultipleEscrowBalanceParams,
 	SendTransactionParams,
 	SetTrustlineParams,
-	GetMultipleEscrowBalanceParams,
-	BalanceItem,
 } from '../../types/helper.types'
 
 export function createHelperModule(http: AxiosInstance) {

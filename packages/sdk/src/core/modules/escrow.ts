@@ -1,30 +1,39 @@
 import type { AxiosInstance } from 'axios'
 import type { ApiResponse, EscrowData } from '../../types/common.types'
 import type {
-	FundEscrowParams,
-	ReleaseFundsParams,
-	ResolveDisputeParams,
+	ChangeDisputeFlagParams,
 	ChangeMilestoneApprovedFlagParams,
 	ChangeMilestoneStatusParams,
-	ChangeDisputeFlagParams,
-	UpdateEscrowParams,
+	FundEscrowParams,
 	GetEscrowParams,
+	ReleaseFundsParams,
+	ResolveDisputeParams,
+	UpdateEscrowParams,
 } from '../../types/escrow.types'
 
 export function createEscrowModule(http: AxiosInstance) {
 	return {
 		async fundEscrow(params: FundEscrowParams): Promise<ApiResponse> {
-			const { data } = await http.post<ApiResponse>('/escrow/fund-escrow', params)
+			const { data } = await http.post<ApiResponse>(
+				'/escrow/fund-escrow',
+				params,
+			)
 			return data
 		},
 
 		async releaseFunds(params: ReleaseFundsParams): Promise<ApiResponse> {
-			const { data } = await http.post<ApiResponse>('/escrow/release-funds', params)
+			const { data } = await http.post<ApiResponse>(
+				'/escrow/release-funds',
+				params,
+			)
 			return data
 		},
 
 		async resolveDispute(params: ResolveDisputeParams): Promise<ApiResponse> {
-			const { data } = await http.post<ApiResponse>('/escrow/resolving-disputes', params)
+			const { data } = await http.post<ApiResponse>(
+				'/escrow/resolving-disputes',
+				params,
+			)
 			return data
 		},
 
@@ -48,7 +57,9 @@ export function createEscrowModule(http: AxiosInstance) {
 			return data
 		},
 
-		async changeDisputeFlag(params: ChangeDisputeFlagParams): Promise<ApiResponse> {
+		async changeDisputeFlag(
+			params: ChangeDisputeFlagParams,
+		): Promise<ApiResponse> {
 			const { data } = await http.post<ApiResponse>(
 				'/escrow/change-dispute-flag',
 				params,

@@ -1,7 +1,10 @@
 import axios, { type AxiosInstance } from 'axios'
 import { TrustlessWorkError } from './errors'
 
-export function createHttpClient(baseURL: string, apiKey?: string): AxiosInstance {
+export function createHttpClient(
+	baseURL: string,
+	apiKey?: string,
+): AxiosInstance {
 	const client = axios.create({
 		baseURL,
 		headers: {

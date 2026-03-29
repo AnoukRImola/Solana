@@ -1,10 +1,10 @@
 import { useCallback } from 'react'
-import { useTrustlessWork } from '../context'
 import type { ApiResponse } from '../../types/common.types'
 import type {
-	DeploySingleReleaseParams,
 	DeployMultiReleaseParams,
+	DeploySingleReleaseParams,
 } from '../../types/deployer.types'
+import { useTrustlessWork } from '../context'
 
 export function useDeploySingleRelease() {
 	const tw = useTrustlessWork()

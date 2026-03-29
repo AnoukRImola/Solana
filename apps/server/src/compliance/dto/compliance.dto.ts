@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
+import { Type } from 'class-transformer'
 import {
 	IsBoolean,
 	IsNotEmpty,
@@ -9,7 +10,6 @@ import {
 	Min,
 	ValidateNested,
 } from 'class-validator'
-import { Type } from 'class-transformer'
 
 export class TravelRuleDataDto {
 	@ApiProperty()
@@ -157,7 +157,16 @@ export class GetEscrowsBySignerDto {
 }
 
 export class GetEscrowsByRoleDto {
-	@ApiProperty({ enum: ['approver', 'serviceProvider', 'receiver', 'releaseSigner', 'disputeResolver', 'platformAddress'] })
+	@ApiProperty({
+		enum: [
+			'approver',
+			'serviceProvider',
+			'receiver',
+			'releaseSigner',
+			'disputeResolver',
+			'platformAddress',
+		],
+	})
 	@IsString()
 	@IsNotEmpty()
 	role: string

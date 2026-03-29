@@ -1,17 +1,17 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common'
 import { BN } from '@coral-xyz/anchor'
-import { PublicKey } from '@solana/web3.js'
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common'
 import {
-	getAssociatedTokenAddress,
-	createAssociatedTokenAccountInstruction,
 	TOKEN_PROGRAM_ID,
+	createAssociatedTokenAccountInstruction,
+	getAssociatedTokenAddress,
 } from '@solana/spl-token'
+import { PublicKey } from '@solana/web3.js'
 import { apiConfig } from 'src/config/api.config'
 import {
-	getConnection,
-	getProgram,
 	deriveEscrowPda,
 	deriveMultiReleaseEscrowPda,
+	getConnection,
+	getProgram,
 } from 'src/config/constants/program.constant'
 import type { ApiResponse } from 'src/interfaces/response.interface'
 import { PendingWriteQueueService } from '../queue/pending-write-queue.service'
@@ -85,7 +85,7 @@ export class DeployerService {
 				.accountsPartial({
 					escrowAccount: escrowPda,
 					initializer: signer,
-					})
+				})
 				.instruction()
 
 			const { blockhash } = await connection.getLatestBlockhash()
@@ -186,7 +186,7 @@ export class DeployerService {
 				.accountsPartial({
 					escrowAccount: escrowPda,
 					initializer: signer,
-					})
+				})
 				.instruction()
 
 			const { blockhash } = await connection.getLatestBlockhash()

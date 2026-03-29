@@ -1,15 +1,18 @@
 import type { AxiosInstance } from 'axios'
 import type { TrustlessWorkOptions } from '../types/config'
 import { createHttpClient } from './http'
-import { createAuthModule, type AuthModule } from './modules/auth'
-import { createDeployerModule, type DeployerModule } from './modules/deployer'
-import { createEscrowModule, type EscrowModule } from './modules/escrow'
+import { type AuthModule, createAuthModule } from './modules/auth'
 import {
-	createMultiReleaseModule,
+	type ComplianceModule,
+	createComplianceModule,
+} from './modules/compliance'
+import { type DeployerModule, createDeployerModule } from './modules/deployer'
+import { type EscrowModule, createEscrowModule } from './modules/escrow'
+import { type HelperModule, createHelperModule } from './modules/helper'
+import {
 	type MultiReleaseModule,
+	createMultiReleaseModule,
 } from './modules/multi-release'
-import { createHelperModule, type HelperModule } from './modules/helper'
-import { createComplianceModule, type ComplianceModule } from './modules/compliance'
 
 export class TrustlessWork {
 	private http: AxiosInstance

@@ -1,13 +1,13 @@
 import * as anchor from '@coral-xyz/anchor'
-import { EscrowIDL, type Escrow } from '@programs/solana-tl'
-import { Keypair, PublicKey, SystemProgram } from '@solana/web3.js'
+import { type Escrow, EscrowIDL } from '@programs/solana-tl'
 import {
+	TOKEN_PROGRAM_ID,
 	createMint,
 	createAccount as createTokenAccount,
-	mintTo,
 	getAccount,
-	TOKEN_PROGRAM_ID,
+	mintTo,
 } from '@solana/spl-token'
+import { Keypair, PublicKey, SystemProgram } from '@solana/web3.js'
 import { assert } from 'chai'
 
 describe('Escrow Program - Single Release', () => {
@@ -494,21 +494,12 @@ describe('Escrow Program - Single Release', () => {
 			// Verify token distributions
 			const receiverToken = await getAccount(connection, receiverTokenAccount)
 			const platformToken = await getAccount(connection, platformTokenAccount)
-			const twToken = await getAccount(
-				connection,
-				trustlessWorkTokenAccount,
-			)
+			const twToken = await getAccount(connection, trustlessWorkTokenAccount)
 
 			// Receiver should get amount minus fees
 			assert.ok(Number(receiverToken.amount) > 0, 'Receiver got tokens')
-			assert.ok(
-				Number(platformToken.amount) > 0,
-				'Platform got fee tokens',
-			)
-			assert.ok(
-				Number(twToken.amount) > 0,
-				'Trustless Work got fee tokens',
-			)
+			assert.ok(Number(platformToken.amount) > 0, 'Platform got fee tokens')
+			assert.ok(Number(twToken.amount) > 0, 'Trustless Work got fee tokens')
 
 			// Total distributed should equal original amount
 			const totalDistributed =
@@ -673,9 +664,7 @@ describe('Escrow Program - Single Release', () => {
 				.signers([approver])
 				.rpc()
 
-			const fetched = await program.account.escrowData.fetch(
-				disputeEscrowPda,
-			)
+			const fetched = await program.account.escrowData.fetch(disputeEscrowPda)
 			assert.equal(fetched.flags.dispute, true)
 		})
 
@@ -715,9 +704,7 @@ describe('Escrow Program - Single Release', () => {
 				.signers([disputeResolver])
 				.rpc()
 
-			const fetched = await program.account.escrowData.fetch(
-				disputeEscrowPda,
-			)
+			const fetched = await program.account.escrowData.fetch(disputeEscrowPda)
 			assert.equal(fetched.flags.resolved, true)
 			assert.equal(fetched.flags.dispute, false)
 
@@ -733,14 +720,8 @@ describe('Escrow Program - Single Release', () => {
 			)
 			const twToken = await getAccount(connection, disputeTwTokenAccount)
 
-			assert.ok(
-				Number(approverToken.amount) > 0,
-				'Approver received funds',
-			)
-			assert.ok(
-				Number(spToken.amount) > 0,
-				'Service provider received funds',
-			)
+			assert.ok(Number(approverToken.amount) > 0, 'Approver received funds')
+			assert.ok(Number(spToken.amount) > 0, 'Service provider received funds')
 			assert.ok(Number(platformToken.amount) > 0, 'Platform got fees')
 			assert.ok(Number(twToken.amount) > 0, 'Trustless Work got fees')
 		})

@@ -47,7 +47,10 @@ export class TravelRuleGuard implements CanActivate {
 		} catch (error) {
 			if (error instanceof ForbiddenException) throw error
 			// If compliance service fails (e.g. RPC error), allow but log
-			console.error('TravelRuleGuard: Error checking compliance, allowing request:', error.message)
+			console.error(
+				'TravelRuleGuard: Error checking compliance, allowing request:',
+				error.message,
+			)
 			return true
 		}
 	}

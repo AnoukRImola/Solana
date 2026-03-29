@@ -1,2 +1,2 @@
-const EscrowIDL = require("../target/idl/escrow.json");
-module.exports = { EscrowIDL };
+const EscrowIDL = require('../target/idl/escrow.json')
+module.exports = { EscrowIDL }

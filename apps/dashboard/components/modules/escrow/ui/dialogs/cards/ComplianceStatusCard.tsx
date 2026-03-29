@@ -1,7 +1,10 @@
 'use client'
 
 import { CheckCircle, Globe, ShieldCheck, XCircle } from 'lucide-react'
-import type { ComplianceData, EscrowComplianceData } from '~/@types/escrow.entity'
+import type {
+	ComplianceData,
+	EscrowComplianceData,
+} from '~/@types/escrow.entity'
 import { Badge } from '~/components/ui/badge'
 import { Card, CardContent } from '~/components/ui/card'
 import TooltipInfo from '~/components/utils/ui/Tooltip'
@@ -37,7 +40,9 @@ export const ComplianceStatusCard = ({
 						<TooltipInfo content="KYC/AML compliance status for this escrow." />
 					</div>
 					<ShieldCheck
-						className={isKycVerified ? 'text-green-600' : 'text-muted-foreground'}
+						className={
+							isKycVerified ? 'text-green-600' : 'text-muted-foreground'
+						}
 						size={30}
 					/>
 				</div>
@@ -72,7 +77,9 @@ export const ComplianceStatusCard = ({
 								Risk Score:{' '}
 							</span>
 							<Badge
-								variant={compliance.riskScore <= 30 ? 'secondary' : 'destructive'}
+								variant={
+									compliance.riskScore <= 30 ? 'secondary' : 'destructive'
+								}
 								className="text-xs"
 							>
 								{compliance.riskScore}/100

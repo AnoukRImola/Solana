@@ -25,8 +25,7 @@ export const SolanaProvider: React.FC<SolanaProviderProps> = ({ children }) => {
 		WalletAdapterNetwork.Devnet
 
 	const endpoint = useMemo(
-		() =>
-			process.env.NEXT_PUBLIC_SOLANA_RPC_ENDPOINT || clusterApiUrl(network),
+		() => process.env.NEXT_PUBLIC_SOLANA_RPC_ENDPOINT || clusterApiUrl(network),
 		[network],
 	)
 

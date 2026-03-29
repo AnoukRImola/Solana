@@ -3,12 +3,12 @@ import {
 	createAssociatedTokenAccountInstruction,
 	getAssociatedTokenAddress,
 } from '@solana/spl-token'
-import {
-	Connection,
-	PublicKey,
-} from '@solana/web3.js'
+import { Connection, PublicKey } from '@solana/web3.js'
 import { apiConfig } from 'src/config/api.config'
-import { getConnection, getProgram } from 'src/config/constants/program.constant'
+import {
+	getConnection,
+	getProgram,
+} from 'src/config/constants/program.constant'
 import { ApiResponse } from 'src/interfaces/response.interface'
 import { buildTransaction } from 'src/utils/transaction.utils'
 import { PendingWriteHandlerService } from '../queue/pending-write-handler.service'
@@ -258,7 +258,7 @@ export class HelperService {
 		} catch (err) {
 			console.error(
 				`Error handling pending write for key ${queueKey} (type: ${pending.type}). ` +
-				`Entry kept in queue for potential retry. TX: ${responseHash}`,
+					`Entry kept in queue for potential retry. TX: ${responseHash}`,
 				err,
 			)
 		}

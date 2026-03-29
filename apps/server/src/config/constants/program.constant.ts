@@ -1,6 +1,6 @@
 import { AnchorProvider, Program, Wallet } from '@coral-xyz/anchor'
+import { type Escrow, EscrowIDL } from '@programs/solana-tl'
 import { Connection, Keypair, PublicKey } from '@solana/web3.js'
-import { EscrowIDL, type Escrow } from '@programs/solana-tl'
 import { apiConfig } from '../api.config'
 
 let _connection: Connection | null = null
@@ -11,7 +11,9 @@ export function getServerKeypair(): Keypair {
 	if (!_serverKeypair) {
 		const raw = apiConfig.solanaPayerSecretKeyJSON
 		if (!raw) {
-			throw new Error('SOLANA_PAYER_SECRET_KEY_JSON environment variable is required')
+			throw new Error(
+				'SOLANA_PAYER_SECRET_KEY_JSON environment variable is required',
+			)
 		}
 		const secretKey = Uint8Array.from(JSON.parse(raw))
 		_serverKeypair = Keypair.fromSecretKey(secretKey)

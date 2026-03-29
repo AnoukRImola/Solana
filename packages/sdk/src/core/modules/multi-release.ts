@@ -1,17 +1,19 @@
 import type { AxiosInstance } from 'axios'
 import type { ApiResponse } from '../../types/common.types'
 import type {
-	MultiReleaseFundEscrowParams,
-	MultiReleaseMilestoneStatusParams,
 	MultiReleaseApproveMilestoneParams,
-	MultiReleaseMilestoneOperationParams,
 	MultiReleaseDisputeResolutionParams,
+	MultiReleaseFundEscrowParams,
+	MultiReleaseMilestoneOperationParams,
+	MultiReleaseMilestoneStatusParams,
 	MultiReleaseWithdrawRemainingFundsParams,
 } from '../../types/multi-release.types'
 
 export function createMultiReleaseModule(http: AxiosInstance) {
 	return {
-		async fundEscrow(params: MultiReleaseFundEscrowParams): Promise<ApiResponse> {
+		async fundEscrow(
+			params: MultiReleaseFundEscrowParams,
+		): Promise<ApiResponse> {
 			const { data } = await http.post<ApiResponse>(
 				'/escrow/multi-release/fund-escrow',
 				params,

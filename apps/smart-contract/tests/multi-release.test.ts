@@ -1,13 +1,13 @@
 import * as anchor from '@coral-xyz/anchor'
-import { type Escrow } from '@programs/solana-tl'
-import { Keypair, PublicKey, SystemProgram } from '@solana/web3.js'
+import type { Escrow } from '@programs/solana-tl'
 import {
+	TOKEN_PROGRAM_ID,
 	createMint,
 	createAccount as createTokenAccount,
-	mintTo,
 	getAccount,
-	TOKEN_PROGRAM_ID,
+	mintTo,
 } from '@solana/spl-token'
+import { Keypair, PublicKey, SystemProgram } from '@solana/web3.js'
 import { assert } from 'chai'
 
 describe('Escrow Program - Multi Release', () => {
@@ -47,8 +47,14 @@ describe('Escrow Program - Multi Release', () => {
 
 	before(async () => {
 		const airdrops = [
-			approver, serviceProvider, platform, releaseSigner,
-			disputeResolver, receiver1, receiver2, receiver3,
+			approver,
+			serviceProvider,
+			platform,
+			releaseSigner,
+			disputeResolver,
+			receiver1,
+			receiver2,
+			receiver3,
 			trustlessWorkWallet,
 		].map(async (kp) => {
 			const sig = await connection.requestAirdrop(
@@ -70,32 +76,71 @@ describe('Escrow Program - Multi Release', () => {
 		)
 
 		escrowTokenAccount = await createTokenAccount(
-			connection, payer, mint, escrowPda, Keypair.generate(),
+			connection,
+			payer,
+			mint,
+			escrowPda,
+			Keypair.generate(),
 		)
 
 		funderTokenAccount = await createTokenAccount(
-			connection, payer, mint, provider.publicKey, Keypair.generate(),
+			connection,
+			payer,
+			mint,
+			provider.publicKey,
+			Keypair.generate(),
 		)
 		approverTokenAccount = await createTokenAccount(
-			connection, payer, mint, approver.publicKey, Keypair.generate(),
+			connection,
+			payer,
+			mint,
+			approver.publicKey,
+			Keypair.generate(),
 		)
 		platformTokenAccount = await createTokenAccount(
-			connection, payer, mint, platform.publicKey, Keypair.generate(),
+			connection,
+			payer,
+			mint,
+			platform.publicKey,
+			Keypair.generate(),
 		)
 		trustlessWorkTokenAccount = await createTokenAccount(
-			connection, payer, mint, trustlessWorkWallet.publicKey, Keypair.generate(),
+			connection,
+			payer,
+			mint,
+			trustlessWorkWallet.publicKey,
+			Keypair.generate(),
 		)
 		receiver1TokenAccount = await createTokenAccount(
-			connection, payer, mint, receiver1.publicKey, Keypair.generate(),
+			connection,
+			payer,
+			mint,
+			receiver1.publicKey,
+			Keypair.generate(),
 		)
 		receiver2TokenAccount = await createTokenAccount(
-			connection, payer, mint, receiver2.publicKey, Keypair.generate(),
+			connection,
+			payer,
+			mint,
+			receiver2.publicKey,
+			Keypair.generate(),
 		)
 		receiver3TokenAccount = await createTokenAccount(
-			connection, payer, mint, receiver3.publicKey, Keypair.generate(),
+			connection,
+			payer,
+			mint,
+			receiver3.publicKey,
+			Keypair.generate(),
 		)
 
-		await mintTo(connection, payer, mint, funderTokenAccount, provider.publicKey, 2_000_000)
+		await mintTo(
+			connection,
+			payer,
+			mint,
+			funderTokenAccount,
+			provider.publicKey,
+			2_000_000,
+		)
 	})
 
 	describe('initialize_multi_release_escrow', () => {
@@ -113,7 +158,12 @@ describe('Escrow Program - Multi Release', () => {
 							evidence: '',
 							amount: new anchor.BN(milestone1Amount),
 							receiver: receiver1.publicKey,
-							flags: { approved: false, disputed: false, released: false, resolved: false },
+							flags: {
+								approved: false,
+								disputed: false,
+								released: false,
+								resolved: false,
+							},
 						},
 						{
 							description: 'Backend development',
@@ -121,7 +171,12 @@ describe('Escrow Program - Multi Release', () => {
 							evidence: '',
 							amount: new anchor.BN(milestone2Amount),
 							receiver: receiver2.publicKey,
-							flags: { approved: false, disputed: false, released: false, resolved: false },
+							flags: {
+								approved: false,
+								disputed: false,
+								released: false,
+								resolved: false,
+							},
 						},
 						{
 							description: 'Deployment & QA',
@@ -129,7 +184,12 @@ describe('Escrow Program - Multi Release', () => {
 							evidence: '',
 							amount: new anchor.BN(milestone3Amount),
 							receiver: receiver3.publicKey,
-							flags: { approved: false, disputed: false, released: false, resolved: false },
+							flags: {
+								approved: false,
+								disputed: false,
+								released: false,
+								resolved: false,
+							},
 						},
 					],
 					trustline: { address: mint, decimals: 6 },
@@ -150,7 +210,8 @@ describe('Escrow Program - Multi Release', () => {
 				})
 				.rpc()
 
-			const fetched = await program.account.multiReleaseEscrowData.fetch(escrowPda)
+			const fetched =
+				await program.account.multiReleaseEscrowData.fetch(escrowPda)
 			assert.equal(fetched.engagementId, engagementId)
 			assert.equal(fetched.milestones.length, 3)
 			assert.equal(fetched.isInitialized, true)
@@ -177,14 +238,21 @@ describe('Escrow Program - Multi Release', () => {
 						title: 'Bad',
 						description: 'Should fail',
 						platformFee: new anchor.BN(100),
-						milestones: [{
-							description: 'M1',
-							status: 'Pending',
-							evidence: '',
-							amount: new anchor.BN(0),
-							receiver: receiver1.publicKey,
-							flags: { approved: false, disputed: false, released: false, resolved: false },
-						}],
+						milestones: [
+							{
+								description: 'M1',
+								status: 'Pending',
+								evidence: '',
+								amount: new anchor.BN(0),
+								receiver: receiver1.publicKey,
+								flags: {
+									approved: false,
+									disputed: false,
+									released: false,
+									resolved: false,
+								},
+							},
+						],
 						trustline: { address: mint, decimals: 6 },
 						roles: {
 							approver: approver.publicKey,
@@ -238,7 +306,8 @@ describe('Escrow Program - Multi Release', () => {
 				.signers([serviceProvider])
 				.rpc()
 
-			const fetched = await program.account.multiReleaseEscrowData.fetch(escrowPda)
+			const fetched =
+				await program.account.multiReleaseEscrowData.fetch(escrowPda)
 			assert.equal(fetched.milestones[0].status, 'Completed')
 			assert.equal(fetched.milestones[0].evidence, 'Frontend done')
 		})
@@ -253,7 +322,8 @@ describe('Escrow Program - Multi Release', () => {
 				.signers([approver])
 				.rpc()
 
-			const fetched = await program.account.multiReleaseEscrowData.fetch(escrowPda)
+			const fetched =
+				await program.account.multiReleaseEscrowData.fetch(escrowPda)
 			assert.equal(fetched.milestones[0].flags.approved, true)
 		})
 
@@ -272,7 +342,8 @@ describe('Escrow Program - Multi Release', () => {
 				.signers([releaseSigner])
 				.rpc()
 
-			const fetched = await program.account.multiReleaseEscrowData.fetch(escrowPda)
+			const fetched =
+				await program.account.multiReleaseEscrowData.fetch(escrowPda)
 			assert.equal(fetched.milestones[0].flags.released, true)
 
 			const r1Token = await getAccount(connection, receiver1TokenAccount)
@@ -333,7 +404,8 @@ describe('Escrow Program - Multi Release', () => {
 				.signers([approver])
 				.rpc()
 
-			const fetched = await program.account.multiReleaseEscrowData.fetch(escrowPda)
+			const fetched =
+				await program.account.multiReleaseEscrowData.fetch(escrowPda)
 			assert.equal(fetched.milestones[1].flags.disputed, true)
 		})
 
@@ -372,7 +444,8 @@ describe('Escrow Program - Multi Release', () => {
 				.signers([disputeResolver])
 				.rpc()
 
-			const fetched = await program.account.multiReleaseEscrowData.fetch(escrowPda)
+			const fetched =
+				await program.account.multiReleaseEscrowData.fetch(escrowPda)
 			assert.equal(fetched.milestones[1].flags.resolved, true)
 			assert.equal(fetched.milestones[1].flags.disputed, false)
 
@@ -452,7 +525,10 @@ describe('Escrow Program - Multi Release', () => {
 					.signers([approver])
 					.rpc()
 
-				const escrowTokenAfter = await getAccount(connection, escrowTokenAccount)
+				const escrowTokenAfter = await getAccount(
+					connection,
+					escrowTokenAccount,
+				)
 				assert.equal(Number(escrowTokenAfter.amount), 0)
 			}
 
