@@ -45,6 +45,7 @@ export type {
 export type {
 	InitializeRegistryParams,
 	VerifyAddressParams,
+	CloseRegistryParams,
 	RevokeVerificationParams,
 	SetEscrowComplianceParams,
 	SetTravelRuleDataParams,

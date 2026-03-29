@@ -1,6 +1,7 @@
 import { useCallback } from 'react'
 import type { ApiResponse } from '../../types/common.types'
 import type {
+	CloseRegistryParams,
 	GetAuditLogsParams,
 	GetEscrowComplianceParams,
 	GetEscrowsByEngagementParams,
@@ -64,6 +65,16 @@ export function useSetTravelRuleData() {
 		[tw],
 	)
 	return { setTravelRuleData }
+}
+
+export function useCloseRegistry() {
+	const tw = useTrustlessWork()
+	const closeRegistry = useCallback(
+		(params: CloseRegistryParams): Promise<ApiResponse> =>
+			tw.compliance.closeRegistry(params),
+		[tw],
+	)
+	return { closeRegistry }
 }
 
 export function useGetRegistry() {

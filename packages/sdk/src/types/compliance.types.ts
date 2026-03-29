@@ -1,16 +1,18 @@
 import type { TravelRuleData } from './common.types'
 
 export interface InitializeRegistryParams {
-	signer: string
 	travelRuleThreshold: string
 }
 
 export interface VerifyAddressParams {
-	signer: string
 	address: string
 	kycProvider: string
 	jurisdiction: string
 	riskScore: number
+}
+
+export interface CloseRegistryParams {
+	signer: string
 }
 
 export interface RevokeVerificationParams {

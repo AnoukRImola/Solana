@@ -32,6 +32,7 @@ export {
 export {
 	useInitializeRegistry,
 	useVerifyAddress,
+	useCloseRegistry,
 	useRevokeVerification,
 	useSetEscrowCompliance,
 	useSetTravelRuleData,

@@ -1,6 +1,7 @@
 import type { AxiosInstance } from 'axios'
 import type { ApiResponse } from '../../types/common.types'
 import type {
+	CloseRegistryParams,
 	GetAuditLogsParams,
 	GetEscrowComplianceParams,
 	GetEscrowsByEngagementParams,
@@ -60,6 +61,14 @@ export function createComplianceModule(http: AxiosInstance) {
 		): Promise<ApiResponse> {
 			const { data } = await http.post<ApiResponse>(
 				'/compliance/set-travel-rule-data',
+				params,
+			)
+			return data
+		},
+
+		async closeRegistry(params: CloseRegistryParams): Promise<ApiResponse> {
+			const { data } = await http.post<ApiResponse>(
+				'/compliance/close-registry',
 				params,
 			)
 			return data
