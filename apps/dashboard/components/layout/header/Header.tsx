@@ -9,6 +9,7 @@ import { cn } from '~/lib/utils'
 import { Breadcrumb, BreadcrumbList } from '../../ui/breadcrumb'
 import { SidebarTrigger } from '../../ui/sidebar'
 import ThemeToggle from './ThemeToggle'
+import { NotificationBell } from '../../notifications/NotificationBell'
 import useHeader from './hooks/header.hook'
 
 const Header = () => {
@@ -46,6 +47,7 @@ const Header = () => {
 
 						<div className="flex gap-5 ml-auto">
 							<ThemeToggle />
+							<NotificationBell />
 
 							<Button variant="outline" onClick={handleDisconnect}>
 								<LogOut /> Disconnect
