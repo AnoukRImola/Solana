@@ -1,44 +1,44 @@
 import {
-	IsArray,
-	IsBoolean,
-	IsNotEmpty,
-	IsOptional,
-	IsString,
-} from 'class-validator'
-import { IsAddressValid } from 'src/common/custom-validators'
+  IsArray,
+  IsBoolean,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+} from 'class-validator';
+import { IsAddressValid } from 'src/common/custom-validators';
 
 export class SendTransactionDto {
-	@IsNotEmpty({ message: 'The signedXdr must not be empty' })
-	@IsString()
-	signedXdr: string
+  @IsNotEmpty({ message: 'The signedXdr must not be empty' })
+  @IsString()
+  signedXdr: string;
 
-	@IsNotEmpty({ message: 'The queueKey must not be empty' })
-	@IsString()
-	queueKey: string
+  @IsNotEmpty({ message: 'The queueKey must not be empty' })
+  @IsString()
+  queueKey: string;
 
-	@IsBoolean()
-	@IsOptional()
-	returnEscrowDataIsRequired: boolean
+  @IsBoolean()
+  @IsOptional()
+  returnEscrowDataIsRequired: boolean;
 
-	@IsBoolean()
-	@IsOptional()
-	saveInfo: boolean
+  @IsBoolean()
+  @IsOptional()
+  saveInfo: boolean;
 }
 
 export class SetTrustlineDto {
-	@IsNotEmpty({ message: 'The wallet address must not be empty' })
-	@IsString()
-	@IsAddressValid()
-	walletAddress: string
+  @IsNotEmpty({ message: 'The wallet address must not be empty' })
+  @IsString()
+  @IsAddressValid()
+  walletAddress: string;
 }
 
 export class GetMultiSigEscrowBalanceDto {
-	@IsNotEmpty({ message: 'The signer must not be empty' })
-	@IsString()
-	@IsAddressValid()
-	signer: string
+  @IsNotEmpty({ message: 'The signer must not be empty' })
+  @IsString()
+  @IsAddressValid()
+  signer: string;
 
-	@IsArray()
-	@IsOptional()
-	addresses: string[]
+  @IsArray()
+  @IsOptional()
+  addresses: string[];
 }

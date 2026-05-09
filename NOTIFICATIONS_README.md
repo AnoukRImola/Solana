@@ -5,6 +5,7 @@
 Se ha implementado un sistema completo de notificaciones en tiempo real con las siguientes características:
 
 ### Backend (NestJS + Socket.io)
+
 - ✅ WebSocket Gateway con JWT authentication
 - ✅ 6 endpoints REST para CRUD de notificaciones
 - ✅ Room isolation por wallet address
@@ -13,6 +14,7 @@ Se ha implementado un sistema completo de notificaciones en tiempo real con las 
 - ✅ Tracking de conexiones activas
 
 ### Frontend (Next.js + Zustand + Socket.io-client)
+
 - ✅ Servicio de WebSocket con auto-reconexión
 - ✅ API REST client con axios
 - ✅ Zustand slice con estado completo
@@ -33,16 +35,18 @@ Se ha implementado un sistema completo de notificaciones en tiempo real con las 
 **Solución:**
 
 1. **Agregar la API key al `.env.local` del dashboard:**
+
 ```env
 # El mismo valor que JWT_SECRET en el backend
 NEXT_PUBLIC_API_KEY=trustless-work-solana-dev-secret-2026
 ```
 
 2. **Actualizar la función `getAuthToken()` en `notifications.slice.ts`:**
+
 ```typescript
 function getAuthToken(): string | null {
-  if (typeof window === 'undefined') return null
-  return process.env.NEXT_PUBLIC_API_KEY || null
+  if (typeof window === "undefined") return null;
+  return process.env.NEXT_PUBLIC_API_KEY || null;
 }
 ```
 
@@ -109,6 +113,7 @@ Estas variables están documentadas en `.env.example`.
 ## 🚀 Cómo Probar el Sistema
 
 ### 1. Iniciar Backend
+
 ```bash
 cd apps/server
 npm run start:dev
@@ -117,6 +122,7 @@ npm run start:dev
 El servidor WebSocket estará en `http://localhost:3000/notifications`
 
 ### 2. Iniciar Frontend
+
 ```bash
 cd apps/dashboard
 npm run dev
@@ -157,12 +163,15 @@ Todos requieren JWT Bearer token:
 ## 📁 Archivos Creados/Modificados
 
 ### Backend (10 archivos)
+
 **Creados:**
+
 1. `apps/server/src/notifications/gateways/notifications.gateway.ts`
 2. `apps/server/src/notifications/dto/create-notification.dto.ts`
 3. `apps/server/src/notifications/dto/pagination.dto.ts`
 
 **Modificados:**
+
 1. `apps/server/src/notifications/notifications.service.ts`
 2. `apps/server/src/notifications/notifications.controller.ts`
 3. `apps/server/src/notifications/notifications.module.ts`
@@ -171,7 +180,9 @@ Todos requieren JWT Bearer token:
 6. `apps/server/.env.example`
 
 ### Frontend (11 archivos)
+
 **Creados:**
+
 1. `apps/dashboard/lib/socket.ts`
 2. `apps/dashboard/services/notifications.api.ts`
 3. `apps/dashboard/core/store/ui/@types/notifications.entity.ts`
@@ -182,6 +193,7 @@ Todos requieren JWT Bearer token:
 8. `apps/dashboard/components/ui/scroll-area.tsx`
 
 **Modificados:**
+
 1. `apps/dashboard/core/store/ui/index.ts`
 2. `apps/dashboard/components/layout/header/Header.tsx`
 3. `apps/dashboard/firebase.ts`
@@ -193,18 +205,22 @@ Todos requieren JWT Bearer token:
 ## 🔧 Troubleshooting
 
 ### Error: "Authentication required" en WebSocket
+
 - **Causa:** No se está enviando JWT token
 - **Solución:** Implementar el flujo de login (ver sección 1)
 
 ### Error: "Cannot read property 'includes' of undefined"
+
 - **Causa:** Notificación sin campo `entities` o `readBy`
 - **Solución:** Verificar que las notificaciones en Firestore tengan estos campos
 
 ### Notificaciones no aparecen
+
 - **Causa:** Wallet address no está en el array `entities` de la notificación
 - **Solución:** Verificar que los CRON jobs incluyen la wallet address correcta
 
 ### WebSocket no conecta
+
 - **Causa:** CORS origins incorrectos
 - **Solución:** Verificar `WEBSOCKET_CORS_ORIGINS` en `.env` del servidor
 
@@ -214,18 +230,18 @@ Todos requieren JWT Bearer token:
 
 ```typescript
 enum NotificationType {
-  CONTRACT_CREATED = 'CONTRACT_CREATED',
-  WORK_SUBMITTED = 'WORK_SUBMITTED',
-  WORK_APPROVED = 'WORK_APPROVED',
-  WORK_REJECTED = 'WORK_REJECTED',
-  PAYMENT_RELEASED = 'PAYMENT_RELEASED',
-  PAYMENT_RECEIVED = 'PAYMENT_RECEIVED',
-  DISPUTE_OPENED = 'DISPUTE_OPENED',
-  DISPUTE_RESOLVED = 'DISPUTE_RESOLVED',
-  CONTRACT_CANCELLED = 'CONTRACT_CANCELLED',
-  DEADLINE_APPROACHING = 'DEADLINE_APPROACHING',
-  MILESTONE_COMPLETED = 'MILESTONE_COMPLETED',
-  SYSTEM_NOTIFICATION = 'SYSTEM_NOTIFICATION',
+  CONTRACT_CREATED = "CONTRACT_CREATED",
+  WORK_SUBMITTED = "WORK_SUBMITTED",
+  WORK_APPROVED = "WORK_APPROVED",
+  WORK_REJECTED = "WORK_REJECTED",
+  PAYMENT_RELEASED = "PAYMENT_RELEASED",
+  PAYMENT_RECEIVED = "PAYMENT_RECEIVED",
+  DISPUTE_OPENED = "DISPUTE_OPENED",
+  DISPUTE_RESOLVED = "DISPUTE_RESOLVED",
+  CONTRACT_CANCELLED = "CONTRACT_CANCELLED",
+  DEADLINE_APPROACHING = "DEADLINE_APPROACHING",
+  MILESTONE_COMPLETED = "MILESTONE_COMPLETED",
+  SYSTEM_NOTIFICATION = "SYSTEM_NOTIFICATION",
 }
 ```
 
