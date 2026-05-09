@@ -86,6 +86,10 @@ pub mod escrow {
         instructions::milestone::change_milestone_flag_handler(ctx, milestone_index, new_flag)
     }
 
+    pub fn cancel_escrow(ctx: Context<CancelEscrow>) -> Result<()> {
+        instructions::escrow::cancel_escrow_handler(ctx)
+    }
+
     // ============================
     // Multi-Release Instructions
     // ============================

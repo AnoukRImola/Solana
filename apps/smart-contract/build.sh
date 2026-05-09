@@ -12,10 +12,12 @@ fi
 echo "🔵 Building smart contract..."
 # if (cargo build-sbf); then
 if (anchor build); then
-  # Move the smart contract to the sol-program directory.
-  # ? Maybe this should be a symlink instead? Or another folder?
+  # Copy the smart contract to the sol-program directory and create symlink
   rm -rf $program_dir/target/
-  mv target/ $program_dir/target/
+  cp -r target/ $program_dir/target/
+  # Create symlink for compatibility with linting tools
+  rm -f target
+  ln -s ../../programs/solana-tl/target target
   echo "🟢 Build successful!"
   read -p "🟡 Do you want to deploy the smart contract? (y/N) " -n 1 -r
   if [[ $arg1 == "-y" ]]; then

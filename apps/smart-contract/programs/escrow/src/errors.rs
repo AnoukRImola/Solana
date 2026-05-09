@@ -66,4 +66,7 @@ pub enum EscrowError {
     #[msg("Only compliance authority can perform this action")] OnlyComplianceAuthority,
     #[msg("Escrow compliance already set")] EscrowComplianceAlreadySet,
     #[msg("Sanctioned jurisdiction")] SanctionedJurisdiction,
+    #[msg("Cannot cancel escrow with existing balance")] CannotCancelFundedEscrow,
+    #[msg("Cannot cancel escrow with approved milestones")] CannotCancelWithApprovedMilestones,
+    #[msg("Cannot cancel already released escrow")] CannotCancelReleasedEscrow,
 }
