@@ -26,53 +26,27 @@ Se ha implementado un sistema completo de notificaciones en tiempo real con las 
 
 ## ⚠️ Pendiente de Implementar
 
-### 1. JWT Authentication en Frontend
+### 1. Configurar API Key en Frontend
 
-**Problema:** El backend requiere JWT authentication, pero el frontend no tiene implementado el flujo de login que genera el JWT.
+**Problema:** El backend usa guards de autenticación con API key, pero falta configurar la variable de entorno en el frontend.
 
-**Solución requerida:**
+**Solución:**
 
-1. **Crear endpoint de login en el backend** (si no existe):
+1. **Agregar la API key al `.env.local` del dashboard:**
+```env
+# El mismo valor que JWT_SECRET en el backend
+NEXT_PUBLIC_API_KEY=trustless-work-solana-dev-secret-2026
+```
+
+2. **Actualizar la función `getAuthToken()` en `notifications.slice.ts`:**
 ```typescript
-// apps/server/src/auth/auth.controller.ts
-@Post('login')
-async login(@Body() loginDto: { walletAddress: string, signature: string }) {
-  // Verificar firma de la wallet
-  // Generar JWT token
-  return { token: 'jwt_token_here' }
+function getAuthToken(): string | null {
+  if (typeof window === 'undefined') return null
+  return process.env.NEXT_PUBLIC_API_KEY || null
 }
 ```
 
-2. **Implementar login en el frontend:**
-```typescript
-// apps/dashboard/services/auth.api.ts
-export async function loginWithWallet(walletAddress: string, signature: string) {
-  const response = await axios.post(`${API_URL}/auth/login`, {
-    walletAddress,
-    signature
-  })
-
-  // Guardar token en localStorage
-  localStorage.setItem('jwt_token', response.data.token)
-
-  return response.data
-}
-```
-
-3. **Llamar login cuando el usuario conecta su wallet:**
-```typescript
-// apps/dashboard/components/modules/auth/wallet/hooks/wallet.hook.ts
-const handleConnect = async () => {
-  setVisible(true)
-  // Después de conectar la wallet:
-  // 1. Obtener signature de la wallet
-  // 2. Llamar loginWithWallet()
-  // 3. Guardar JWT token
-}
-```
-
-**Ubicación del placeholder:**
-- `apps/dashboard/core/store/ui/slices/notifications.slice.ts:298` - función `getAuthToken()`
+**Nota:** El proyecto usa un API key compartido (no JWT por usuario individual). Este es el mismo patrón usado en otros endpoints del backend (ver `compliance.controller.ts`).
 
 ---
 

@@ -295,19 +295,13 @@ export const useNotificationsSlice: StateCreator<
 	}
 }
 
-// Helper function to get auth token
+// Helper function to get auth token (API key)
 function getAuthToken(): string | null {
-	// TODO: Implement JWT authentication
-	// The backend expects a JWT token with the wallet address in the payload
-	// For now, this returns null which will prevent API calls from working
-	// You need to implement:
-	// 1. Call backend /auth/login endpoint with wallet signature
-	// 2. Store the JWT token (localStorage or httpOnly cookie)
-	// 3. Return the token here
 	if (typeof window === 'undefined') return null
 
-	// Temporary: try to get from localStorage (you need to implement the login flow)
-	return localStorage.getItem('jwt_token')
+	// The project uses a shared API key for backend authentication
+	// This is the same pattern used in other endpoints (see compliance.controller.ts)
+	return process.env.NEXT_PUBLIC_API_KEY || null
 }
 
 // Helper function to get user wallet address from Zustand store
