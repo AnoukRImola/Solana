@@ -54,6 +54,12 @@ pub struct EscrowPropertiesChanged {
     pub platform_address: Pubkey,
 }
 
+#[event]
+pub struct EscrowCancelled {
+    pub escrow_id: String,
+    pub cancelled_by: Pubkey,
+}
+
 // Multi-Release Events
 
 #[event]

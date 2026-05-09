@@ -510,3 +510,18 @@ pub struct SetTravelRuleData<'info> {
     )]
     pub compliance: Account<'info, EscrowCompliance>,
 }
+
+#[derive(Accounts)]
+pub struct CancelEscrow<'info> {
+    #[account(mut)]
+    pub platform_signer: Signer<'info>,
+
+    #[account(
+        mut,
+        seeds = [b"escrow", escrow_account.engagement_id.as_bytes()],
+        bump,
+        constraint = escrow_account.roles.platform_address == platform_signer.key() @ EscrowError::OnlyPlatformAddressExecuteThisFunction,
+        close = platform_signer
+    )]
+    pub escrow_account: Account<'info, EscrowData>,
+}

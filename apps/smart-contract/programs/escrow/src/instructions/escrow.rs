@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 
 use crate::{
-    context::{InitializeEscrow, FundEscrow, ChangeEscrowProperties, ReleaseFunds, GetEscrow},
+    context::{InitializeEscrow, FundEscrow, ChangeEscrowProperties, ReleaseFunds, GetEscrow, CancelEscrow},
     errors::EscrowError,
     state::EscrowData,
     utils::{
@@ -11,7 +11,7 @@ use crate::{
             validate_release_conditions, validate_initialize_escrow_conditions
         },
         token_transfer_handler::{transfer_from_escrow, transfer_to_escrow, has_sufficient_balance},
-        events::{EscrowInitialized, EscrowFunded, FundsReleased, EscrowPropertiesChanged},
+        events::{EscrowInitialized, EscrowFunded, FundsReleased, EscrowPropertiesChanged, EscrowCancelled},
     }
 };
 
@@ -149,6 +149,35 @@ pub fn fund_escrow_handler(ctx: Context<FundEscrow>, amount: u64) -> Result<()> 
         amount,
     });
 
+    Ok(())
+}
+
+pub fn cancel_escrow_handler(ctx: Context<CancelEscrow>) -> Result<()> {
+    let escrow = &ctx.accounts.escrow_account;
+
+    // Validate escrow has no balance
+    if escrow.balance > 0 {
+        return Err(EscrowError::CannotCancelFundedEscrow.into());
+    }
+
+    // Validate escrow has not been released
+    if escrow.flags.release {
+        return Err(EscrowError::CannotCancelReleasedEscrow.into());
+    }
+
+    // Validate no milestones have been approved
+    for milestone in &escrow.milestones {
+        if milestone.approved_flag {
+            return Err(EscrowError::CannotCancelWithApprovedMilestones.into());
+        }
+    }
+
+    emit!(EscrowCancelled {
+        escrow_id: escrow.engagement_id.clone(),
+        cancelled_by: ctx.accounts.platform_signer.key(),
+    });
+
+    // Account will be closed automatically due to `close = platform_signer` constraint
     Ok(())
 }
 
