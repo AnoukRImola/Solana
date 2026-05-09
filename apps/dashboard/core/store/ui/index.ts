@@ -9,15 +9,18 @@ import type { LoaderGlobalUIStore } from './@types/loader.entity'
 import type { StepsGlobalUIStore } from './@types/steps.entity'
 import type { ThemeGlobalUIStore } from './@types/theme.entity'
 import type { TutorialGlobalUIStore } from './@types/tutorial.entity'
+import type { NotificationsGlobalUIStore } from './@types/notifications.entity'
 import { useLoaderSlice } from './slices/loader.slice'
 import { useStepsSlice } from './slices/steps.slice'
 import { useThemeSlice } from './slices/theme.slice'
 import { useTutorialSlice } from './slices/tutorial.slice'
+import { useNotificationsSlice } from './slices/notifications.slice'
 
 type GlobalUIState = ThemeGlobalUIStore &
 	LoaderGlobalUIStore &
 	StepsGlobalUIStore &
-	TutorialGlobalUIStore
+	TutorialGlobalUIStore &
+	NotificationsGlobalUIStore
 
 const devtoolsOptions: DevtoolsOptions = {
 	name: 'Global UI State',
@@ -55,12 +58,16 @@ export const useGlobalUIBoundedStore = create<GlobalUIState>()(
 				...useLoaderSlice(...a),
 				...useStepsSlice(...a),
 				...useTutorialSlice(...a),
+				...useNotificationsSlice(...a),
 			}),
 			devtoolsOptions,
 		),
 		{
 			name: 'theme-storage',
 			storage: createJSONStorage(() => localStorage),
+			partialize: (state) => ({
+				theme: state.theme,
+			}),
 		},
 	),
 )
