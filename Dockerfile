@@ -15,7 +15,7 @@ COPY packages/allbridge/ packages/allbridge/
 COPY apps/server/ apps/server/
 
 # Install dependencies
-RUN npm install
+RUN npm install --legacy-peer-deps
 
 # Build server
 RUN cd apps/server && rm -rf dist && npm run build
