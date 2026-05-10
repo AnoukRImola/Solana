@@ -15,10 +15,10 @@ COPY packages/allbridge/ packages/allbridge/
 COPY apps/server/ apps/server/
 
 # Install dependencies
-RUN bun install
+RUN npm install
 
 # Build server
-RUN cd apps/server && rm -rf dist && bun run build
+RUN cd apps/server && rm -rf dist && npm run build
 
 WORKDIR /app/apps/server
 
