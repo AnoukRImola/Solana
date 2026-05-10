@@ -24,4 +24,5 @@ WORKDIR /app/apps/server
 
 EXPOSE 3000
 
-CMD ["node", "dist/main.js"]
+# Use npm start which includes dotenv config
+CMD ["npm", "run", "start"]
