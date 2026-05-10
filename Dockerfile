@@ -9,6 +9,11 @@ COPY package.json bun.lock ./
 
 # Copy workspace packages needed by server
 COPY programs/solana-tl/ programs/solana-tl/
+
+# Copy smart contract build artifacts (types)
+COPY apps/smart-contract/target/types apps/smart-contract/target/types
+COPY apps/smart-contract/target/idl apps/smart-contract/target/idl
+
 COPY packages/allbridge/ packages/allbridge/
 
 # Copy server
