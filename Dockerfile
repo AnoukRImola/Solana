@@ -14,11 +14,11 @@ COPY packages/allbridge/ packages/allbridge/
 # Copy server
 COPY apps/server/ apps/server/
 
-# Install dependencies
-RUN npm install --legacy-peer-deps
+# Install dependencies with bun (supports workspace:*)
+RUN bun install
 
-# Build server
-RUN cd apps/server && rm -rf dist && npm run build
+# Build server with npm (more stable with NestJS)
+RUN cd apps/server && rm -rf dist && npx nest build
 
 WORKDIR /app/apps/server
 
